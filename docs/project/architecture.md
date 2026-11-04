@@ -1,3 +1,11 @@
+---
+title: Architecture
+description: The C4 model of ci-judge in three levels, context, containers and the modules of src/, then one run as a sequence; each box names a file or a crate.
+status: current
+last_reviewed: 2026-11-04
+tags: [ci-judge, architecture, c4, project]
+---
+
 # Architecture
 
 The C4 model of ci-judge in three levels, then one run as a sequence.
@@ -159,5 +167,5 @@ gate error and never a pass.
 | Why item requests carry no item source | `src/requests.rs` |
 | What the verdict file holds and what the gate validates | `src/verdict.rs` |
 | What each mode does on each platform | `src/gate.rs` |
-| How a rubric is written and promoted | `.claude/skills/rubric/SKILL.md`, `rubrics/infra-plan/` |
-| How the image is built | `Dockerfile`, `scripts/image-context.sh`, `CONTRIBUTING.md` |
+| How a rubric is written and promoted | [Write a rubric](../guides/write-a-rubric.md), [Shadow, label, eval, promote](../guides/shadow-and-eval.md) |
+| How the image is built | [Container image](../reference/container-image.md), [Releasing](releasing.md) |

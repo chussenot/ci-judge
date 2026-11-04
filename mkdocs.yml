@@ -1,0 +1,74 @@
+# The documentation site: `mise run docs:serve` to preview, `mise run docs:check`
+# to build strictly (a page the nav lacks or a link that does not resolve
+# fails), as the `docs` job of ci.yml does. Pages are under docs/ and follow
+# Diátaxis: start, guides, reference, concepts, project.
+site_name: ci-judge
+site_description: Merge-request evidence to a calibrated verdict file for a CI gate
+site_url: https://chussenot.github.io/ci-judge/
+repo_url: https://github.com/chussenot/ci-judge
+repo_name: chussenot/ci-judge
+edit_uri: edit/main/docs/
+docs_dir: docs
+strict: true
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Light mode
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+
+nav:
+  - Overview: index.md
+  - Start:
+      - Install: start/install.md
+      - First run: start/first-run.md
+  - Guides:
+      - Run in GitLab CI: guides/gitlab.md
+      - Run in GitHub Actions: guides/github.md
+      - Write a rubric: guides/write-a-rubric.md
+      - Shadow, label, eval, promote: guides/shadow-and-eval.md
+      - Run in a container: guides/container.md
+  - Reference:
+      - Command line: reference/cli.md
+      - Configuration: reference/configuration.md
+      - Manifest: reference/manifest.md
+      - Sources and reducers: reference/collectors.md
+      - Verdict file: reference/verdict-file.md
+      - Gate: reference/gate.md
+      - Bundled rubrics: reference/rubrics.md
+      - Container image: reference/container-image.md
+  - Concepts:
+      - Why ci-judge: concepts/why.md
+      - The granularity rule: concepts/granularity.md
+      - Modes and promotion: concepts/modes.md
+  - Project:
+      - Architecture: project/architecture.md
+      - Contributing: project/contributing.md
+      - Releasing: project/releasing.md

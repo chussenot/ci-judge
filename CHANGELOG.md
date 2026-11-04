@@ -1,3 +1,11 @@
+---
+title: Changelog
+description: Every notable change to ci-judge, by version, in the Keep a Changelog format.
+status: current
+last_reviewed: 2026-11-04
+tags: [ci-judge, changelog]
+---
+
 # Changelog
 
 All notable changes to ci-judge are documented here. The format follows
@@ -5,6 +13,23 @@ All notable changes to ci-judge are documented here. The format follows
 [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+### Added
+
+- The documentation under `docs/`, built by mkdocs (`mise run docs:check`,
+  `mise run docs:serve`): install and first run, guides for GitLab,
+  GitHub, rubrics, shadow mode and the container, reference pages for
+  the command line, configuration, the manifest, sources and reducers,
+  the verdict file, the gate, the bundled rubrics and the image, the
+  concepts behind the design, and the project pages; front matter on
+  every Markdown file, held by `scripts/check-frontmatter.sh` and the
+  `docs` CI job.
+
+### Changed
+
+- The README states why the binary exists and points at the docs; what
+  it held moved to the pages above. `CONTRIBUTING.md` points at
+  `docs/project/`.
 
 ## [0.1.0] - 2026-11-04
 

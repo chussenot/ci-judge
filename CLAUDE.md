@@ -1,10 +1,19 @@
+---
+title: Claude Code instructions
+description: What a Claude Code session needs to know to work in this repository; the start, the rules that are easy to get wrong, and the harness.
+status: current
+last_reviewed: 2026-11-04
+tags: [ci-judge, claude-code]
+---
+
 # ci-judge
 
 Merge-request evidence to a calibrated verdict file for a CI gate, as a
 Rust binary on the `judgment` crate: collectors and reducers, one request
 per evidence item plus one global request, a `.jud` rubric asked through a
 System One backend, the verdict file a gate validates and decides on.
-The README says why and how; `CONTRIBUTING.md` says how to work here.
+The README says why; `docs/` says how (`docs/index.md` is the map,
+`docs/project/contributing.md` how to work here).
 
 ## Start here
 
@@ -68,6 +77,13 @@ The README says why and how; `CONTRIBUTING.md` says how to work here.
   `TYPESAFE_BASE_URL`, then `~/.config/jud/config.yaml`, then the defaults
   (`src/config.rs`); the key is never printed. The image is `FROM scratch`
   and carries no `git`, so the `diff` source inside it needs an artifact.
+- Documentation lives under `docs/` (Diátaxis: `start/`, `guides/`,
+  `reference/`, `concepts/`, `project/`), every Markdown file in the
+  repository carries front matter (`title`, `description`, `status`,
+  `last_reviewed`, `tags`; `scripts/check-frontmatter.sh`), a new page
+  goes in `mkdocs.yml`'s nav, and `mise run docs:check` builds the site
+  strictly. The README is for deciding whether to use the binary;
+  everything after that decision is a docs page.
 - Commits are Conventional Commits (`cog verify` runs on every message
   through prek; CI checks a pull request's commits). A release is `cog
   bump --auto` on `main`, never a hand-edited version, and the tag push

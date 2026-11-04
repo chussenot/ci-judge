@@ -116,6 +116,18 @@ jobs:
       - name: Every commit of this pull request is a Conventional Commit
         run: cog check --ignore-merge-commits "origin/${{ github.base_ref }}..HEAD"
 
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Front matter on every Markdown file
+        run: scripts/check-frontmatter.sh
+      - name: The site builds strictly
+        run: uvx --with mkdocs-material mkdocs build --strict --site-dir target/site
+
   # The judge judging its own pull requests, with no key: every request is
   # shaped and printed, nothing is asked.
   dogfood:

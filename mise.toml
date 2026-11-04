@@ -80,6 +80,17 @@ run = "cargo hack check --feature-powerset --no-dev-deps"
 description = "The crate builds on its rust-version"
 run = "cargo +1.91.0 check --all-targets || echo 'install the MSRV toolchain: rustup toolchain install 1.91.0'"
 
+[tasks."docs:check"]
+description = "Front matter on every Markdown file, and the site builds strictly (every page in the nav, every link resolves)"
+run = [
+  "scripts/check-frontmatter.sh",
+  "uvx --with mkdocs-material mkdocs build --strict --site-dir target/site",
+]
+
+[tasks."docs:serve"]
+description = "Preview the documentation site at http://127.0.0.1:8000"
+run = "uvx --with mkdocs-material mkdocs serve"
+
 [tasks.hooks]
 description = "The pre-commit hooks on every file, as the `hooks` job of ci.yml runs them"
 run = "prek run --all-files --hook-stage pre-commit"
