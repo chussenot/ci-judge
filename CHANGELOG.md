@@ -14,8 +14,12 @@ All notable changes to ci-judge are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-04
+
 ### Added
 
+- `ci-judge version`, the subcommand the GitLab example and the install
+  page use; `--version` prints the same.
 - The documentation under `docs/`, built by mkdocs (`mise run docs:check`,
   `mise run docs:serve`): install and first run, guides for GitLab,
   GitHub, rubrics, shadow mode and the container, reference pages for
@@ -39,6 +43,9 @@ All notable changes to ci-judge are documented here. The format follows
 
 ### Fixed
 
+- The release workflow's hook job extracts `prek` onto `PATH`; the v0.1.0
+  run stopped there, so this is the first release with binaries and an
+  image.
 - The `mr` source reads the whole description from the merge request API
   when GitLab cut `CI_MERGE_REQUEST_DESCRIPTION` at 2700 characters
   (`CI_MERGE_REQUEST_DESCRIPTION_IS_TRUNCATED`); a failed read is a

@@ -28,8 +28,8 @@ The README says why; `docs/` says how (`docs/index.md` is the map,
   `judge-gate` block, or `ci-judge gate` and `action.yml` on GitHub) turns
   the file into exit 0/1/2/3.
 - `CHANGELOG.md` is Keep a Changelog written by hand, its section headed
-  with the version before `cog bump`, which refuses without it; 0.x means
-  a minor release may break.
+  with the version before `mise run release`, which refuses without it;
+  0.x means a minor release may break.
 
 ## Rules that are easy to get wrong
 

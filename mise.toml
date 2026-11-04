@@ -151,10 +151,14 @@ run = "for d in rubrics/*/; do jud check \"$d\"*.jud; done"
 # push runs .github/workflows/release.yml.
 
 [tasks."release:check"]
-description = "What the next release would be"
-run = ["cog check", "cog bump --auto --dry-run"]
+description = "What the next release would be, and that CHANGELOG.md has its section"
+run = [
+  "cog check",
+  "v=$(cog bump --auto --dry-run) || exit 1; echo \"$v\"; grep -qF \"## [${v#v}] \" CHANGELOG.md || { echo \"CHANGELOG.md has no section for $v\" >&2; exit 1; }",
+]
 
 [tasks.release]
-description = "Bump, changelog, tag; then push the tag to release"
+description = "Bump and tag; then push the tag to release"
+depends = ["release:check"]
 # A lightweight tag, which `git push --follow-tags` would leave behind.
 run = ["cog bump --auto", "echo 'now: git push origin main --tags'"]

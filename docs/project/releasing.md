@@ -25,9 +25,10 @@ half-published release.
 
 1. On `main`, with a clean tree: write the version's section in
    `CHANGELOG.md` by hand, headed `## [x.y.z] - YYYY-MM-DD`, moving the
-   lines out of `Unreleased`. `cog bump` refuses without it.
+   lines out of `Unreleased`. `mise run release` refuses without it.
 2. `mise run release:check`: what the next version would be, from the
-   Conventional Commits since the last tag.
+   Conventional Commits since the last tag, and that `CHANGELOG.md` has
+   that version's section.
 3. `mise run release`: `cog bump --auto` bumps `Cargo.toml`, runs `cargo
    check` so `Cargo.lock` follows, commits `chore(version): vx.y.z` and
    tags `vx.y.z`.

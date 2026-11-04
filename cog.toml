@@ -1,15 +1,14 @@
 # cocogitto (https://docs.cocogitto.io): every commit is a Conventional
 # Commit, the version comes from them, and `cog bump --auto` makes the tag
 # that .github/workflows/release.yml builds. CHANGELOG.md is Keep a
-# Changelog written by hand: head its section with the version before the
-# bump, which refuses without it (the first hook) rather than writing its
-# own section after a `- - -` separator.
+# Changelog written by hand, so no section is generated after a `- - -`
+# separator; `mise run release:check` refuses a version without its
+# section (a failing first hook here makes cog panic on an empty stash).
 tag_prefix = "v"
 branch_whitelist = ["main"]
 ignore_merge_commits = true
 disable_changelog = true
 pre_bump_hooks = [
-  "grep -qF '## [{{version}}] ' CHANGELOG.md",
   "cargo set-version {{version}} 2>/dev/null || sed -i.bak 's/^version = \".*\"/version = \"{{version}}\"/' Cargo.toml && rm -f Cargo.toml.bak",
   "cargo check --quiet",
   "git add Cargo.toml Cargo.lock",
