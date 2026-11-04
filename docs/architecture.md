@@ -1,171 +1,162 @@
 # Architecture
 
-The C4 model of ci-judge, from the systems around it down to the modules
-inside it. Every box names a file or a crate so the diagram can be checked
-against the code; when they disagree, the code wins and this page is
-wrong. Rendered by GitHub and by any Mermaid viewer.
+The C4 model of ci-judge in three levels, then one run as a sequence.
+Each diagram shows one idea; the table under it carries the detail. Boxes
+name files and crates so the diagrams can be checked against the code;
+when they disagree, the code wins and this page is wrong.
 
-## Level 1: system context
+## Level 1: context
 
-A merge request produces evidence. ci-judge turns that evidence into a
-verdict file; a gate turns the file into a pipeline decision; a System One
-backend is the only place a model runs.
+ci-judge sits between a CI platform and a model. It reads a change's
+evidence, asks a rubric, and writes one file. A gate reads that file and
+decides.
 
 ```mermaid
-C4Context
-  title ci-judge in its context
+flowchart LR
+    eng([Engineer])
+    ci[CI platform<br/>GitLab CI or GitHub Actions]
+    judge[ci-judge]
+    gate[Gate<br/>judge-gate block or ci-judge gate]
+    model[(System One backend<br/>TypeSafe or self-hosted)]
 
-  Person(engineer, "Engineer", "Opens a merge request and reads the gate's findings")
-  Person(reviewer, "Reviewer", "Labels shadow-mode cases so a rubric can be tuned")
-
-  System(cijudge, "ci-judge", "Collects the evidence of a change, asks a .jud rubric, writes judge-gate.verdict.json")
-  System(gate, "Gate", "A GitLab judge-gate block, or ci-judge gate and action.yml on GitHub: mode, override label, exit 0/1/2/3")
-
-  System_Ext(ci, "CI platform", "GitLab CI or GitHub Actions: the pipeline, the artifacts, the MR or PR API")
-  System_Ext(backend, "System One backend", "TypeSafe Jev, or any server speaking POST /v1/systemone (a local model behind transformers serve or Ollama)")
-  System_Ext(jud, "jud", "The judgment crate's command line: check, eval, tune the same .jud files")
-
-  Rel(engineer, ci, "pushes a change, reads notes and annotations")
-  Rel(ci, cijudge, "runs in a job with the artifacts and CI_* / GITHUB_* variables")
-  Rel(cijudge, ci, "reads the diff, the MR fields, failed job traces", "git, REST")
-  Rel(cijudge, backend, "one request per evidence item plus one global request", "HTTPS, judgment crate")
-  Rel(cijudge, gate, "judge-gate.verdict.json")
-  Rel(gate, ci, "note or comment, Code Quality, annotations, dotenv, route, exit status")
-  Rel(reviewer, jud, "labels cases, tunes bars from recordings")
-  Rel(jud, cijudge, "rubric, cases and recordings, shared files")
+    eng -->|opens a change| ci
+    ci -->|runs with the evidence| judge
+    judge <-->|typed questions, probabilities| model
+    judge -->|judge-gate.verdict.json| gate
+    gate -->|note, annotations, exit 0 1 2 3| ci
+    ci -->|findings| eng
 ```
+
+| Element | What it is | Where |
+|---|---|---|
+| CI platform | The pipeline, its artifacts, the merge or pull request API | `src/platform.rs` |
+| ci-judge | This binary: collect, redact, ask, write the verdict | `src/` |
+| Gate | On GitLab a `judge-gate` block (shell and jq); on GitHub `ci-judge gate` or the composite action | `src/gate.rs`, `action.yml` |
+| System One backend | Any server speaking `POST /v1/systemone`: the hosted API or a local model | `src/config.rs` |
+| Reviewers and `jud` | Label shadow-mode cases and tune bars on the same `.jud` files, outside the pipeline | `.claude/skills/rubric/SKILL.md` |
 
 ## Level 2: containers
 
-One static binary does the judging on both platforms. The decision is a
-block on GitLab and a subcommand of the same binary on GitHub. Files on
-disk are the seams: the verdict file between judging and deciding, the
-`.jud` documents between this crate and `jud`.
+Inside one CI job, files are the seams: evidence in, the verdict file out,
+the rubric directory shared with `jud`.
 
 ```mermaid
-C4Container
-  title The CI job that judges a change
+flowchart LR
+    subgraph job [CI job]
+        direction LR
+        evidence[/Evidence<br/>tfplan.json, junit.xml, diff, MR fields/]
+        rubric[/Rubric directory<br/>manifest.yml, .jud rubric, cases, recordings/]
+        run[ci-judge run]
+        verdict[/judge-gate.verdict.json/]
+        gate[Gate<br/>block or ci-judge gate]
+    end
+    model[(System One backend)]
+    ui[Merge request UI<br/>note, Code Quality, annotations, job state]
 
-  Person(engineer, "Engineer")
-
-  System_Boundary(job, "CI job (GitLab runner or GitHub Actions runner)") {
-    Container(bin, "ci-judge", "Rust, static musl binary, also ghcr.io/chussenot/ci-judge", "run: collect, redact, shape requests, ask, write the verdict. gate: decide on GitHub or without a block")
-    Container(block, "judge-gate block", "GitLab CI hidden job, shell and jq", "Validates the verdict file, applies JUDGE_GATE_MODE, posts the note, writes the Code Quality report and the dotenv")
-    ContainerDb(verdict, "judge-gate.verdict.json", "JSON file", "verdict, summary, route, findings; everything else under ci_judge")
-    ContainerDb(rubric, "rubric directory", ".jud Rubric and Cases, manifest.yml, recordings/", "Bundled in the binary (rubrics/) or in the repository under review")
-    ContainerDb(evidence, "evidence", "tfplan.json, junit*.xml, the checkout", "Artifacts of earlier jobs and the working tree")
-  }
-
-  System_Ext(backend, "System One backend", "POST /v1/systemone")
-  System_Ext(api, "GitLab or GitHub API", "MR or PR fields, job traces, notes and comments")
-  System_Ext(ui, "Merge request UI", "Note or comment, Code Quality widget, annotations, job state")
-
-  Rel(evidence, bin, "artifact, diff, file sources")
-  Rel(api, bin, "mr, joblog sources", "REST, job token or GITLAB_TOKEN / GITHUB_TOKEN")
-  Rel(rubric, bin, "manifest.yml binds questions to evidence; the .jud is lowered to questions")
-  Rel(bin, backend, "Questions + state, one call per request", "judgment::Client, paced and retried")
-  Rel(bin, verdict, "writes; none when it cannot judge")
-  Rel(bin, rubric, "shadow mode: recordings/ and the cases document")
-  Rel(verdict, block, "reads and validates (jq)")
-  Rel(verdict, bin, "ci-judge gate reads and validates (verdict::validate_loose)")
-  Rel(block, ui, "note, gl-code-quality-judge-gate.json, judge-gate.env, exit 0/1/2/3")
-  Rel(bin, ui, "gate: comment, ::error annotations, step summary, GITHUB_OUTPUT, exit 0/1/2/3")
-  Rel(ui, engineer, "")
+    evidence --> run
+    rubric --> run
+    run <--> model
+    run --> verdict
+    run -.->|shadow mode: recordings, cases| rubric
+    verdict --> gate
+    gate --> ui
 ```
 
-## Level 3: components of the binary
+| Container | Role | Reads | Writes |
+|---|---|---|---|
+| `ci-judge run` | Collect, redact, shape one request per item plus one global, ask, apply the policy | evidence, rubric directory, `CI_*` or `GITHUB_*` variables | the verdict file; in shadow mode, recordings and the cases document |
+| Verdict file | The contract between judging and deciding: `verdict`, `summary`, `route`, `findings`, then `ci_judge` | | |
+| Gate | Validate the file, apply the mode, report, exit 0 pass, 1 blocked, 2 gate error, 3 warning | the verdict file, the override label | note or comment, Code Quality report, dotenv, route file, `GITHUB_OUTPUT` |
+| Rubric directory | Bundled in the binary (`rubrics/`) or in the repository under review | | |
 
-`src/lib.rs` lists the modules; `src/main.rs` is the clap surface over
-them. `run` is a straight line through the first row; `gate`, `check`
-and `eval` are side doors into the same modules.
+## Level 3: components
+
+The modules of `src/`, in the order a run uses them. Left to right is the
+data path; the boxes above feed it.
 
 ```mermaid
-C4Component
-  title Modules of ci-judge (src/)
+flowchart LR
+    subgraph inputs [Inputs]
+        direction LR
+        platform[platform.rs<br/>GitLab, GitHub or local]
+        manifest[manifest.rs + rubrics.rs<br/>sources, shapes, severities]
+        config[config.rs<br/>backend settings]
+    end
 
-  Container_Boundary(bin, "ci-judge") {
-    Component(main, "main.rs", "clap", "run, collect, explain, gate, check, eval, config, catalog; CI_JUDGE_* and JUDGE_GATE_* bindings")
-    Component(config, "config.rs", "", "Backend settings as the jud command reads them: env, ~/.config/jud/config.yaml, defaults; ${VAR} expansion")
-    Component(platform, "platform.rs", "reqwest", "GitLab, GitHub or local from the environment; the change under review in one shape; failed job traces; note and comment upserts")
-    Component(manifest, "manifest.rs + rubrics.rs", "serde-saphyr", "The manifest beside a rubric: sources, request shapes, severities, fails_when, finding templates, promotion; the bundled catalog")
-    Component(collect, "collect/", "", "artifact, diff, mr, file, env, joblog: one source to a reduced value")
-    Component(reduce, "reduce/", "roxmltree", "tfplan, junit, diffhunks, json, text, lines: raw output to a value and items with a path and a line")
-    Component(redact, "redact.rs", "regex", "Secret patterns over every string before any network call")
-    Component(requests, "requests.rs", "", "One global request plus one request per item; byte budget; item cap; template rendering")
-    Component(assess, "assess.rs", "judgment crate", "Client (paced), Replay, Recorder, any backend for tests; Rubric::lower per request; .jud recordings")
-    Component(verdict, "verdict.rs", "sha2", "Rubric::apply verdicts to findings and the verdict file; the gate's validation in Rust; evidence hash")
-    Component(gate, "gate.rs", "", "Modes, override label, note or comment, annotations, Code Quality, dotenv, route; exit 0/1/2/3")
-    Component(eval, "eval.rs + cases.rs", "judgment::eval", "check: documents read together; eval: Replay, grade, accuracy, Brier, ECE, promotion bars; cases: shadow-mode writer")
-    Component(run, "run.rs", "", "load, prepare, run, explain: the pipeline that wires the above")
-    Component(error, "error.rs", "", "Exit 0/1/2/3 and Failure")
-  }
+    subgraph path [The data path, src/run.rs]
+        direction LR
+        collect[collect/<br/>one source to a value] --> reduce[reduce/<br/>items with path and line]
+        reduce --> redact[redact.rs]
+        redact --> requests[requests.rs<br/>one per item plus one global]
+        requests --> assess[assess.rs<br/>ask through the judgment crate]
+        assess --> verdict[verdict.rs<br/>policy to findings and the file]
+    end
 
-  System_Ext(judgment, "judgment crate", "jud::parse, Rubric::lower, Rubric::apply, SystemOne, Replay, Recorder, eval")
-  System_Ext(backend, "System One backend")
-  System_Ext(api, "GitLab / GitHub API")
+    gate[gate.rs<br/>mode, report, exit status]
+    eval[eval.rs + cases.rs<br/>check, eval, shadow cases]
 
-  Rel(main, run, "run, collect, explain")
-  Rel(main, gate, "gate")
-  Rel(main, eval, "check, eval")
-  Rel(run, manifest, "Manifest::load, rubric text")
-  Rel(run, platform, "Platform::detect, change, slug")
-  Rel(run, collect, "one call per state source")
-  Rel(collect, reduce, "reduce::apply")
-  Rel(collect, platform, "diff base sha, failed jobs")
-  Rel(run, redact, "every collected value")
-  Rel(run, requests, "requests::build")
-  Rel(run, assess, "Assessor::client or replay, answer_all")
-  Rel(assess, config, "Backend::resolve, client")
-  Rel(assess, judgment, "lower, answer, recording_to_yaml")
-  Rel(judgment, backend, "POST /v1/systemone")
-  Rel(run, verdict, "verdict::build, write")
-  Rel(verdict, judgment, "Rubric::apply")
-  Rel(gate, verdict, "read_loose")
-  Rel(gate, platform, "labels, upsert_note / upsert_comment")
-  Rel(platform, api, "REST")
-  Rel(eval, judgment, "Replay, grade, QuestionMetrics, threshold_sweep")
-  Rel(run, eval, "cases::append in shadow mode")
+    platform --> collect
+    platform --> gate
+    manifest --> requests
+    manifest --> verdict
+    config --> assess
+    verdict --> gate
+    requests -.-> eval
 ```
 
-## Dynamic: one `ci-judge run`
+| Module | Does | Leans on |
+|---|---|---|
+| `main.rs` | The subcommands and their `CI_JUDGE_*`, `JUDGE_GATE_*` bindings | clap |
+| `config.rs` | Backend settings as the `jud` command reads them: environment, `~/.config/jud/config.yaml`, defaults; `${VAR}` expansion | |
+| `platform.rs` | Detects GitLab, GitHub or local; the change under review in one shape; failed job traces; note and comment upserts | reqwest |
+| `manifest.rs`, `rubrics.rs` | The manifest beside a rubric and the bundled catalog | serde-saphyr |
+| `collect/` | `artifact`, `diff`, `mr`, `file`, `env`, `joblog` | git, the platform API |
+| `reduce/` | `tfplan`, `junit`, `diffhunks`, `json`, `text`, `lines`: raw output to a value and items that carry a path and a line | roxmltree |
+| `redact.rs` | Secret patterns over every string before any network call | regex |
+| `requests.rs` | One global request plus one per item, the byte budget, the item cap, finding templates | |
+| `assess.rs` | `Client` (paced), `Replay`, `Recorder`; `Rubric::lower` per request; `.jud` recordings | judgment |
+| `verdict.rs` | `Rubric::apply` verdicts to findings, the verdict file, the gate's validation in Rust | judgment, sha2 |
+| `gate.rs` | Modes, override label, note or comment, annotations, Code Quality, dotenv, route | |
+| `eval.rs`, `cases.rs` | `check`; `eval` over recordings (accuracy, Brier, calibration error, promotion bars); the shadow-mode cases writer | judgment |
+| `error.rs` | Exit 0, 1, 2, 3 | |
+
+## One run, step by step
 
 ```mermaid
 sequenceDiagram
-  autonumber
-  participant J as ci-judge run
-  participant M as manifest + rubric
-  participant C as collect / reduce / redact
-  participant R as requests
-  participant B as backend (judgment)
-  participant V as verdict
-  participant G as gate
+    participant run as ci-judge run
+    participant src as collect, reduce, redact
+    participant model as System One backend
+    participant file as judge-gate.verdict.json
+    participant gate as Gate
 
-  J->>M: Manifest::load, jud::parse, refuse a local blocker or an untuned model
-  loop every state source
-    J->>C: collect(spec) → reduce → redact
-    C-->>J: value + items (path, line)
-  end
-  J->>R: build(global + one per item, budget, cap)
-  R-->>J: requests, truncation
-  loop every request, bounded by the pacer
-    J->>B: Rubric::lower(state) → answer(state, model, questions)
-    B-->>J: Response (verified against the questions)
-    opt --record
-      J->>J: write <id>.jud Recording
+    run->>run: load manifest and rubric
+    loop each state source
+        run->>src: collect and reduce
+        src-->>run: value, items with path and line
     end
-  end
-  J->>V: build: Rubric::apply per response, fails_when, undecided margin, fail_on
-  V-->>J: judge-gate.verdict.json (or nothing, exit 1/2)
-  G->>V: read_loose (the jq validation)
-  G-->>G: mode → exit 0 / 1 / 2 / 3, note or comment, Code Quality, dotenv, route
+    run->>run: shape requests: one per item, one global
+    loop each request
+        run->>model: state and questions
+        model-->>run: probabilities
+    end
+    run->>run: apply the policy, build findings
+    run->>file: write (nothing on failure)
+    gate->>file: read and validate
+    gate-->>gate: mode to exit 0, 1, 2 or 3
 ```
+
+Where the run stops early: a manifest the reader refuses or a model the
+rubric was not tuned on is exit 2 before any call; a collector or a call
+that fails is exit 1; both leave no verdict file, so the gate reports a
+gate error and never a pass.
 
 ## Where to read next
 
 | Question | File |
 |---|---|
 | What a manifest may say | `src/manifest.rs` |
-| What a request looks like and why item requests carry no item source | `src/requests.rs` |
+| Why item requests carry no item source | `src/requests.rs` |
 | What the verdict file holds and what the gate validates | `src/verdict.rs` |
 | What each mode does on each platform | `src/gate.rs` |
 | How a rubric is written and promoted | `.claude/skills/rubric/SKILL.md`, `rubrics/infra-plan/` |
