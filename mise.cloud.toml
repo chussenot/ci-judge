@@ -1,0 +1,25 @@
+# Loaded on top of mise.toml when MISE_ENV=cloud, which .claude/hooks/session-start.sh
+# sets for a Claude Code cloud session (CONTRIBUTING.md, "Cloud sessions").
+#
+# The sandbox cannot reach api.github.com for repositories other than this one,
+# so the backends mise.toml names cannot list versions, and mise's rust core
+# cannot resolve a channel. Direct release downloads and crates.io work, so
+# the same tools, at the same versions, come from pinned release URLs; rust
+# stays rustup's, which reads rust-toolchain.toml. Keep the versions in step
+# with mise.toml.
+#
+# The cargo tools come from their release binaries too: built from crates.io
+# they take minutes of a fresh container's start. `jud` (cargo:judgment) has
+# no musl release asset the hook can rely on, so a cloud session installs it
+# on request (CI_JUDGE_SESSION_JUD=1) with cargo.
+[settings]
+disable_tools = [
+  "rust", "prek", "gh",
+  "cargo:cocogitto", "cargo:cargo-deny", "cargo:cargo-hack", "cargo:judgment",
+]
+
+[tools]
+"http:prek" = { version = "0.5.5", url = "https://github.com/j178/prek/releases/download/v0.5.5/prek-x86_64-unknown-linux-gnu.tar.gz" }
+"http:cog" = { version = "7.0.0", url = "https://github.com/cocogitto/cocogitto/releases/download/7.0.0/cocogitto-7.0.0-x86_64-unknown-linux-musl.tar.gz" }
+"http:cargo-deny" = { version = "0.20.2", url = "https://github.com/EmbarkStudios/cargo-deny/releases/download/0.20.2/cargo-deny-0.20.2-x86_64-unknown-linux-musl.tar.gz" }
+"http:cargo-hack" = { version = "0.6.45", url = "https://github.com/taiki-e/cargo-hack/releases/download/v0.6.45/cargo-hack-x86_64-unknown-linux-musl.tar.gz" }

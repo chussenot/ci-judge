@@ -30,6 +30,21 @@ prek = "latest"
 # A GitHub token-aware release helper for `mise run release:check`.
 gh = "latest"
 
+[tasks.setup]
+description = "The git hooks (prek) and a fetched registry; run once after `mise install`"
+run = [
+  "prek install --hook-type pre-commit --hook-type commit-msg",
+  "cargo fetch",
+]
+
+[tasks."plugins:install"]
+description = "The Claude Code plugins .claude/settings.json enables, at user scope (a cloud session's hook runs this)"
+run = "scripts/claude-plugins.sh install"
+
+[tasks."plugins:update"]
+description = "Refresh the plugin marketplaces; jud and typesafe to their latest, ponytail to its pin"
+run = "scripts/claude-plugins.sh update"
+
 # ---------------------------------------------------------------------------
 # Gates, in the order CI runs them.
 
@@ -64,6 +79,10 @@ run = "cargo hack check --feature-powerset --no-dev-deps"
 [tasks.msrv]
 description = "The crate builds on its rust-version"
 run = "cargo +1.91.0 check --all-targets || echo 'install the MSRV toolchain: rustup toolchain install 1.91.0'"
+
+[tasks.hooks]
+description = "The pre-commit hooks on every file, as the `hooks` job of ci.yml runs them"
+run = "prek run --all-files --hook-stage pre-commit"
 
 [tasks.ci]
 description = "Every gate, the way CI runs them"

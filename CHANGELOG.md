@@ -38,6 +38,13 @@ All notable changes to ci-judge are documented here. The format follows
   tags for the version, its major.minor and `latest`, provenance attested;
   built by the release workflow from `Dockerfile` and
   `scripts/image-context.sh`, or locally with `mise run image`.
+- The Claude Code harness under `.claude/`: six agents (`contract-reviewer`,
+  `rubric-author`, `test-writer`, `docs-writer`, `refactor-scout`,
+  `pr-shepherd`), three skills (`pr-ready`, `steward`, `rubric`), the
+  format-after-edit and Bash guard hooks, and a cloud-session bootstrap
+  (`session-start.sh` with `mise.cloud.toml`); `CLAUDE.md` and
+  `CONTRIBUTING.md`; prek hooks (`.pre-commit-config.yaml`) and the CI jobs
+  that run them and `cog check`.
 - `mise.toml` with the pinned toolchain and tools (rust 1.97.0, cargo-deny,
   cargo-hack, cocogitto, the `jud` command line) and the gates as tasks;
   `deny.toml` for licences, advisories, bans and sources; `cog.toml` for

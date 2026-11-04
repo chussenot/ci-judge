@@ -1,0 +1,136 @@
+{
+  "enabledPlugins": {
+    "jud@judgment": true,
+    "ponytail@ponytail": true,
+    "typesafe@typesafe-ai": true
+  },
+  "extraKnownMarketplaces": {
+    "judgment": {
+      "source": {
+        "repo": "chussenot/judgment",
+        "source": "github"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "ref": "v5.2.0",
+        "repo": "DietrichGebert/ponytail",
+        "source": "github"
+      }
+    },
+    "typesafe-ai": {
+      "source": {
+        "repo": "typesafe-ai/skills",
+        "source": "github"
+      }
+    }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/rustfmt-on-edit.sh",
+            "timeout": 15,
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write"
+      },
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/tidy-after-bash.sh",
+            "timeout": 20,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-bash.sh",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh",
+            "timeout": 1800,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cargo fmt:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo doc:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo run:*)",
+      "Bash(cargo tree:*)",
+      "Bash(cargo metadata:*)",
+      "Bash(cargo deny:*)",
+      "Bash(cargo hack:*)",
+      "Bash(cargo package --list:*)",
+      "Bash(cargo publish --dry-run:*)",
+      "Bash(mise run:*)",
+      "Bash(mise tasks:*)",
+      "Bash(mise ls:*)",
+      "Bash(mise x:*)",
+      "Bash(mise exec:*)",
+      "Bash(mise install:*)",
+      "Bash(mise which:*)",
+      "Bash(mise trust:*)",
+      "Bash(prek run:*)",
+      "Bash(cog verify:*)",
+      "Bash(cog check:*)",
+      "Bash(cog bump --dry-run:*)",
+      "Bash(jud check:*)",
+      "Bash(jud eval:*)",
+      "Bash(jud tune:*)",
+      "Bash(jud config:*)",
+      "Bash(scripts/image-context.sh:*)",
+      "Bash(scripts/claude-plugins.sh:*)",
+      "Bash(claude plugin:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge:*)",
+      "Bash(git worktree:*)",
+      "Bash(git push -u origin claude/:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)"
+    ]
+  }
+}

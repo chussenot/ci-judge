@@ -1,0 +1,39 @@
+# Git hooks, run by prek (https://github.com/j178/prek), a pre-commit
+# compatible runner: `mise run setup` installs them, `prek run --all-files`
+# runs them by hand, and the `hooks` job of ci.yml runs them on every pull
+# request. The cargo hooks are the first two gates of `mise run ci`; the
+# commit-msg hook holds every message to Conventional Commits (cog.toml).
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.jud$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]        # GitLab's !reference tag in examples/gitlab-ci.yml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt --check
+        entry: cargo fmt --all -- --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: cargo clippy --all-targets --all-features -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cog-verify
+        name: cog verify (Conventional Commits)
+        entry: bash -c 'cog verify "$(cat "$1")"' --
+        language: system
+        stages: [commit-msg]

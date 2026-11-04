@@ -216,13 +216,9 @@ mise run judge:explain -- --rubric infra-plan   # what the model would see for t
 mise run jud:check      # the bundled rubrics through the judgment crate's own command line
 ```
 
-`mise tasks` lists the rest. A `.env` beside the checkout (never committed)
-holds `TYPESAFE_API_KEY`, `TYPESAFE_BASE_URL` and the platform tokens for
-`mise run judge:run`. Commits are Conventional Commits; `cog bump --auto`
-(`mise run release`) bumps the version from them, writes the changelog
-section and tags, and the tag push runs the release workflow: the gates,
-the three binaries, the GitHub release with checksums and provenance, then
-the container image.
+`mise tasks` lists the rest; `CONTRIBUTING.md` has the gates, the hooks,
+the release and the Claude Code harness (`.claude/`: six agents, three
+skills, the hooks and the cloud-session bootstrap).
 
 ## Status
 
