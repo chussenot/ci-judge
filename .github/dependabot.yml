@@ -1,0 +1,49 @@
+# Dependabot: weekly pull requests for the crate's dependencies and for the
+# actions the workflows use. The container image is `FROM scratch`, so there
+# is no base image to update; the tools mise.toml pins (cargo-deny,
+# cargo-hack, cocogitto, judgment's cli) are moved by hand.
+#
+# Every commit is a Conventional Commit (cog.toml), so each ecosystem has a
+# prefix; Dependabot writes "chore(deps): bump ...".
+version: 2
+
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      # The crate this one is built on: its own pull request, read with its changelog.
+      judgment:
+        patterns:
+          - "judgment"
+      dev-dependencies:
+        dependency-type: development
+      compatible:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - "judgment"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns:
+          - "*"

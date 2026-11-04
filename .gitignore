@@ -1,5 +1,9 @@
 /target
 /ci-judge-requests
+/bin
+/image
+/dist
+/.env
 judge-gate.verdict.json
 judge-gate.env
 judge-gate.route.yml

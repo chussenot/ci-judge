@@ -31,4 +31,15 @@ All notable changes to ci-judge are documented here. The format follows
 - Three bundled rubrics with manifests and synthetic cases: `infra-plan`,
   `mr-hygiene`, `failed-job-triage`.
 - A composite GitHub Action (`action.yml`) and a release workflow that
-  publishes a static `x86_64-unknown-linux-musl` binary with checksums.
+  publishes static `x86_64` and `aarch64` musl binaries and a macOS arm64
+  one, with checksums and build provenance.
+- The container image `ghcr.io/chussenot/ci-judge`: `FROM scratch`, the
+  release binary byte for byte, uid 65532, `linux/amd64` and `linux/arm64`,
+  tags for the version, its major.minor and `latest`, provenance attested;
+  built by the release workflow from `Dockerfile` and
+  `scripts/image-context.sh`, or locally with `mise run image`.
+- `mise.toml` with the pinned toolchain and tools (rust 1.97.0, cargo-deny,
+  cargo-hack, cocogitto, the `jud` command line) and the gates as tasks;
+  `deny.toml` for licences, advisories, bans and sources; `cog.toml` for
+  Conventional Commits and the release bump; Dependabot for crates and
+  actions.

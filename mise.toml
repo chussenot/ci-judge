@@ -1,0 +1,128 @@
+# The developer's tools and tasks (https://mise.jdx.dev). `mise install` puts
+# every tool at its pinned version in the shell; `mise run <task>` runs a
+# gate the way CI runs it. The same shape as chussenot/judgment, with fewer
+# tools: this crate has no docs site, no benches and no live model tests.
+
+[settings]
+experimental = true
+
+[env]
+RUST_BACKTRACE = "1"
+# A local backend for `mise run judge:*` tasks, never committed: TYPESAFE_API_KEY,
+# TYPESAFE_BASE_URL, GITLAB_TOKEN, GITHUB_TOKEN.
+_.file = ".env"
+
+[tools]
+# Keep in step with rust-toolchain.toml, which rustup and CI read.
+rust = { version = "1.97.0", components = "rustfmt,clippy" }
+# Licences, advisories, duplicate versions and sources (deny.toml); the
+# `deny` job of ci.yml installs the same version.
+"cargo:cargo-deny" = "0.20.2"
+# Every feature combination builds (`mise run hack`).
+"cargo:cargo-hack" = "0.6.45"
+# Conventional commits and the release bump (`cog bump`, CHANGELOG.md).
+"cargo:cocogitto" = "7.0.0"
+# The judgment crate's own command line: `jud check`, `jud eval`, `jud tune`
+# read the rubrics, cases and recordings ci-judge writes.
+"cargo:judgment" = { version = "0.16.1", features = "cli" }
+# Git hooks (prek run) and a multi-arch image build need these two binaries.
+prek = "latest"
+# A GitHub token-aware release helper for `mise run release:check`.
+gh = "latest"
+
+# ---------------------------------------------------------------------------
+# Gates, in the order CI runs them.
+
+[tasks.fmt]
+description = "Format the crate"
+run = "cargo fmt --all"
+
+[tasks."fmt:check"]
+description = "Refuse an unformatted file, as CI does"
+run = "cargo fmt --all --check"
+
+[tasks.lint]
+description = "Clippy on every target, warnings are errors"
+run = "cargo clippy --all-targets --all-features -- -D warnings"
+
+[tasks.test]
+description = "Unit and end-to-end tests (a Fake backend, no key)"
+run = "cargo test --all-targets"
+
+[tasks.check]
+description = "The bundled rubrics, manifests and cases read together"
+run = "cargo run --quiet -- check"
+
+[tasks.deny]
+description = "Licences, advisories, bans and sources (deny.toml)"
+run = "cargo deny check advisories licenses bans sources"
+
+[tasks.hack]
+description = "Every feature combination builds"
+run = "cargo hack check --feature-powerset --no-dev-deps"
+
+[tasks.msrv]
+description = "The crate builds on its rust-version"
+run = "cargo +1.91.0 check --all-targets || echo 'install the MSRV toolchain: rustup toolchain install 1.91.0'"
+
+[tasks.ci]
+description = "Every gate, the way CI runs them"
+depends = ["fmt:check", "lint", "test", "check", "deny"]
+
+# ---------------------------------------------------------------------------
+# Binaries and the image.
+
+[tasks."build:musl"]
+description = "The static Linux binary a runner downloads (target/x86_64-unknown-linux-musl/release/ci-judge)"
+run = [
+  "rustup target add x86_64-unknown-linux-musl",
+  "cargo build --release --locked --target x86_64-unknown-linux-musl",
+  "ls -l target/x86_64-unknown-linux-musl/release/ci-judge",
+]
+
+[tasks.image]
+description = "Build the container image from this checkout's own musl build as ghcr.io/chussenot/ci-judge:dev; a release image is pushed by the release workflow"
+depends = ["build:musl"]
+run = [
+  "scripts/image-context.sh --local",
+  "docker buildx build --load -t ghcr.io/chussenot/ci-judge:dev .",
+  "docker run --rm ghcr.io/chussenot/ci-judge:dev --version",
+  "docker run --rm ghcr.io/chussenot/ci-judge:dev catalog",
+]
+
+[tasks."image:check"]
+description = "The image runs as 65532 with no shell and reads a mounted rubric"
+run = [
+  "docker run --rm -v \"$PWD/rubrics:/work:ro\" ghcr.io/chussenot/ci-judge:dev check infra-plan",
+]
+
+# ---------------------------------------------------------------------------
+# The judge against a working tree, for rubric authors.
+
+[tasks."judge:explain"]
+description = "What the model would see for a rubric, no call: mise run judge:explain -- --rubric infra-plan"
+run = "cargo run --quiet -- explain --platform local"
+
+[tasks."judge:run"]
+description = "Judge the working tree with the backend in .env: mise run judge:run -- --rubric mr-hygiene"
+run = "cargo run --quiet -- run --platform local"
+
+[tasks."judge:gate"]
+description = "Apply a mode to judge-gate.verdict.json locally: mise run judge:gate -- --mode advise"
+run = "cargo run --quiet -- gate --platform local --out target/judge-gate"
+
+[tasks."jud:check"]
+description = "The bundled rubrics through the judgment crate's own command line"
+run = "for d in rubrics/*/; do jud check \"$d\"*.jud; done"
+
+# ---------------------------------------------------------------------------
+# Releasing: `cog bump --auto` bumps the version from the commits, updates
+# CHANGELOG.md and tags; the tag push runs .github/workflows/release.yml.
+
+[tasks."release:check"]
+description = "What the next release would be"
+run = ["cog check --from-latest-tag", "cog bump --auto --dry-run"]
+
+[tasks.release]
+description = "Bump, changelog, tag; then push the tag to release"
+run = ["cog bump --auto", "echo 'now: git push --follow-tags'"]

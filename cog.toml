@@ -1,0 +1,19 @@
+# cocogitto (https://docs.cocogitto.io): every commit is a Conventional
+# Commit, the version comes from them, and `cog bump --auto` writes the
+# CHANGELOG.md section and the tag that .github/workflows/release.yml builds.
+tag_prefix = "v"
+branch_whitelist = ["main"]
+ignore_merge_commits = true
+pre_bump_hooks = [
+  "cargo set-version {{version}} 2>/dev/null || sed -i.bak 's/^version = \".*\"/version = \"{{version}}\"/' Cargo.toml",
+  "cargo check --quiet",
+  "git add Cargo.toml Cargo.lock",
+]
+
+[changelog]
+path = "CHANGELOG.md"
+template = "remote"
+remote = "github.com"
+repository = "ci-judge"
+owner = "chussenot"
+authors = [{ signature = "Clément Hussenot", username = "chussenot" }]

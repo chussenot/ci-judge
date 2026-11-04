@@ -1,0 +1,44 @@
+# cargo-deny (https://embarkstudios.github.io/cargo-deny): what the dependency
+# graph may contain. `mise run deny` and the `deny` job of .github/workflows/ci.yml
+# run `cargo deny check advisories licenses bans sources`.
+
+[graph]
+all-features = true
+
+[output]
+feature-depth = 1
+
+# RustSec: a known vulnerability is an error. A yanked version is an error:
+# its author withdrew it. An unmaintained direct dependency fails the gate;
+# a transitive one is its dependency's to fix.
+[advisories]
+yanked = "deny"
+unmaintained = "workspace"
+ignore = []
+
+# Only licences that let a MIT crate be used and redistributed without extra
+# conditions beyond attribution. A new licence goes on this list in a pull
+# request that names the crate which needs it, in a comment beside it.
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    "OpenSSL",          # aws-lc-sys, the TLS the client links through rustls
+    "CDLA-Permissive-2.0", # webpki-roots, the bundled root certificates
+    "MPL-2.0",          # webpki-root-certs / option-ext, file-level copyleft, unmodified
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

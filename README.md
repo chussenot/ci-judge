@@ -34,6 +34,24 @@ install -m 755 ci-judge-x86_64-unknown-linux-musl ~/.local/bin/ci-judge
 
 Or from source: `cargo install --git https://github.com/chussenot/ci-judge --locked`.
 
+Or as a container, `FROM scratch`, the same binary, no shell, running as
+uid 65532 with `/work` as the working directory:
+
+```sh
+docker run --rm -v "$PWD:/work" -e TYPESAFE_API_KEY ghcr.io/chussenot/ci-judge:0.1.0 run --rubric infra-plan --platform local
+docker run --rm -v "$PWD:/work:ro" ghcr.io/chussenot/ci-judge:0.1.0 check my-rubric/
+gh attestation verify oci://ghcr.io/chussenot/ci-judge:0.1.0 --repo chussenot/ci-judge
+```
+
+Every release pushes the version, its major.minor and `latest`, for
+`linux/amd64` and `linux/arm64`, with a build-provenance attestation. The
+image carries no `git`, so the `diff` source needs the diff collected as an
+artifact (`git diff --merge-base BASE HEAD > changes.diff`, reduced with
+`diffhunks`) when the judge runs inside it; the release binary in a job that
+has `git` needs nothing. A job that runs *inside* an image (GitLab's Docker
+executor) needs a shell the scratch image lacks: build a job image that
+copies the binary out of this one.
+
 ## Backend
 
 The same settings as the `jud` command, so a laptop and a runner read the
@@ -184,6 +202,27 @@ base), `mr` (the change's fields), `file`, `env`, `joblog` (failed job
 traces, GitLab). Reducers produce items with a path and a line where the
 tool output has them; `tfplan` finds each resource's `.tf` file by
 scanning the checkout.
+
+## Developing
+
+[mise](https://mise.jdx.dev) pins the tools and names the gates:
+
+```sh
+mise install            # rust 1.97.0 with rustfmt and clippy, cargo-deny, cargo-hack, cocogitto, jud, prek, gh
+mise run ci             # fmt:check, lint, test, check, deny: what CI runs
+mise run build:musl     # the static Linux binary
+mise run image          # the container image as ghcr.io/chussenot/ci-judge:dev, from that binary
+mise run judge:explain -- --rubric infra-plan   # what the model would see for this checkout
+mise run jud:check      # the bundled rubrics through the judgment crate's own command line
+```
+
+`mise tasks` lists the rest. A `.env` beside the checkout (never committed)
+holds `TYPESAFE_API_KEY`, `TYPESAFE_BASE_URL` and the platform tokens for
+`mise run judge:run`. Commits are Conventional Commits; `cog bump --auto`
+(`mise run release`) bumps the version from them, writes the changelog
+section and tags, and the tag push runs the release workflow: the gates,
+the three binaries, the GitHub release with checksums and provenance, then
+the container image.
 
 ## Status
 

@@ -1,0 +1,5 @@
+# The toolchain rustup and CI use; mise.toml pins the same version for a
+# developer's shell (mise does not read this file: keep the two in step).
+[toolchain]
+channel = "1.97.0"
+components = ["rustfmt", "clippy"]
