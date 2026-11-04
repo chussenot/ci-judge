@@ -33,6 +33,6 @@ while IFS= read -r file; do
      && ! printf '%s\n' "$block" | grep -Eq '^last_reviewed:[[:space:]]*[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
     echo "$file: last_reviewed is not an ISO date"; status=1
   fi
-done < <(find "${1:-.}" -name '*.md' -not -path '*/target/*' -not -path '*/.git/*' | sed 's|^\([^.]\)|./\1|' | sort)
+done < <(git ls-files -co --exclude-standard -- "${1:-.}" | grep '\.md$' | sed 's|^|./|' | sort)
 [ "$status" -eq 0 ] && echo "front matter ok"
 exit "$status"
