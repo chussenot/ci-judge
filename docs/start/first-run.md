@@ -54,11 +54,12 @@ whole contract with the model: a JSON state and typed questions.
 
 ```sh
 export TYPESAFE_API_KEY=...
-ci-judge run --rubric infra-plan --platform local --allow-untuned
+ci-judge run --rubric infra-plan --platform local
 ```
 
-`--allow-untuned` because the bundled rubric carries no `tuning` block
-yet: its bars are defaults. The run logs each source it collected, the
+The bundled rubric carries no `tuning` block yet, so the run notes that
+its bars are untuned defaults and goes on; a rubric tuned on another
+model would stop instead, unless `--allow-untuned` is passed. The run logs each source it collected, the
 backend it asks, and ends with the verdict and `judge-gate.verdict.json`
 beside you. Open it: `verdict`, a `summary`, `findings` with the file and
 line of each unacknowledged change, and `ci_judge` with every answer and

@@ -139,6 +139,8 @@ enum Command {
     Config,
     /// Print the bundled rubric catalog.
     Catalog,
+    /// Print the version, for a script that expects a subcommand.
+    Version,
 }
 
 fn fail(failure: &Failure) -> ExitCode {
@@ -284,6 +286,10 @@ async fn dispatch(command: Command) -> Result<ci_judge::Exit, Failure> {
                 }))
                 .unwrap_or_default()
             );
+            Ok(Exit::Ok)
+        }
+        Command::Version => {
+            println!("ci-judge {}", env!("CARGO_PKG_VERSION"));
             Ok(Exit::Ok)
         }
         Command::Catalog => {

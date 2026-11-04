@@ -11,7 +11,7 @@ tags: [ci-judge, cli, reference]
 `ci-judge <subcommand> [flags]`. Every flag of `run` has a `CI_JUDGE_*`
 variable, every flag of `gate` a `JUDGE_GATE_*` one, so a pipeline sets
 variables and a shell sets flags; a flag wins. Messages go to stderr as
-`ci-judge: MESSAGE` (the gate's as `judge-gate: MESSAGE`); stdout carries
+`ci-judge: MESSAGE`; the gate's log lines as `judge-gate: MESSAGE`, its error like any other; stdout carries
 results.
 
 ## `run`
@@ -27,7 +27,7 @@ Collect the evidence, ask the rubric, write the verdict file.
 | `--record DIR` | `CI_JUDGE_RECORD` | | Keep every answer as a `.jud` Recording named after its request |
 | `--cases-out FILE` | `CI_JUDGE_CASES_OUT` | | Append every request as an unlabelled case to a Cases document, created if absent |
 | `--max-items N` | `CI_JUDGE_MAX_ITEMS` | the manifest's | Cap on per-item requests per shape; the lower of the two applies |
-| `--budget-bytes N` | `CI_JUDGE_BUDGET_BYTES` | `512000` | Cap on the global state; lowest-priority keys are dropped first, never an item source |
+| `--budget-bytes N` | `CI_JUDGE_BUDGET_BYTES` | `512000` | Cap on the global state; lowest-priority keys are dropped first, item sources last |
 | `--max-in-flight N` | `CI_JUDGE_MAX_IN_FLIGHT` | `4` | Requests in flight at once |
 | `--allow-untuned` | `CI_JUDGE_ALLOW_UNTUNED` | off | Run a rubric whose `tuning.model` is not the configured model |
 | `--allow-local-blockers` | `CI_JUDGE_ALLOW_LOCAL_BLOCKERS` | off | Let a repo-local manifest declare `critical` or `blocker` |
@@ -43,12 +43,12 @@ untuned model, no key. On 1 and 2 no verdict file is written.
 
 The same flags as `run`; prints, as JSON on stdout, each request with its
 shape, locator, byte size, the questions its `when` left in, and its
-state. No call. Exit 0 or 2.
+state. No call. Exit 0; 1 when a collector that is not optional failed; 2 before that.
 
 ## `collect`
 
 The same flags as `run` plus `--dir` (default `ci-judge-requests`);
-writes each request as `<id>.json` under it. No call. Exit 0 or 2.
+writes each request as `<id>.json` under it. No call. Exit 0, 1 or 2 as `explain`.
 
 ## `gate`
 
@@ -89,7 +89,7 @@ has no recording; 3 when a question is below a promotion bar
 ## `config`
 
 The resolved backend as JSON: the configuration file path, base URL,
-model, timeout, long context, and where each came from. The key is
+model, timeout, long context, and where the base URL and the model came from. The key is
 reported as `environment`, `config file` or `missing`, never printed.
 
 ## `catalog`
@@ -98,8 +98,8 @@ The bundled rubrics and their files.
 
 ## `version`
 
-`ci-judge --version` prints the crate version; `ci-judge version` is the
-same for a `before_script` that expects a subcommand.
+`ci-judge version` prints `ci-judge <version>`, the same as
+`ci-judge --version`, for a `before_script` that expects a subcommand.
 
 ## Exit status, in one table
 

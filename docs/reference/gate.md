@@ -39,7 +39,7 @@ missing route file.
 | | GitLab | GitHub | Local |
 |---|---|---|---|
 | the note | one merge request note per gate, marker `<!-- judge-gate:<name> -->`, updated in place; needs `GITLAB_TOKEN` and a merge request pipeline | one pull request comment, same marker, updated in place; needs `GITHUB_TOKEN` and a `pull_request` event | `<out>/judge-gate.note.md` |
-| findings with a path | `<out>/gl-code-quality-judge-gate.json`, the Code Quality report; fingerprint over `path:line:description` so a re-run shows nothing new | `::error`, `::warning` or `::notice` workflow commands on stdout, by severity | the Code Quality report |
+| the findings | findings with a path in `<out>/gl-code-quality-judge-gate.json`, the Code Quality report; fingerprint over `path:line:description` so a re-run shows nothing new | one `::error`, `::warning` or `::notice` workflow command per finding, by severity, attached to the file and line when the finding has them | the Code Quality report |
 | the summary | | appended to `GITHUB_STEP_SUMMARY` | |
 | variables for later jobs | `judge-gate.env` as a dotenv report | `verdict` and `route` in `GITHUB_OUTPUT`, plus `judge-gate.env` | `judge-gate.env` |
 

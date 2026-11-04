@@ -18,7 +18,7 @@ reading.
 
 | Field | Required | Meaning |
 |---|---|---|
-| `name` | yes | The rubric's name; matches the `.jud`'s `metadata.name` |
+| `name` | yes | The rubric's name: the catalog key for a bundled rubric; not checked against the `.jud`'s `metadata.name` |
 | `owner`, `description` | no | For the reader |
 | `rubric` | yes | The `.jud` Rubric, relative to the manifest |
 | `cases` | no | The `.jud` Cases, relative; grown by `--cases-out` |

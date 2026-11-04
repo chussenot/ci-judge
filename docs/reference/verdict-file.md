@@ -25,8 +25,9 @@ block's jq, reproduced in `verdict::validate_loose` and applied by
 | `route` | string | optional; `[A-Za-z0-9_-]+`; route mode only |
 | `findings` | array | optional; each `{description, severity?, path?, line?}` with a string `description` and a numeric `line`; `severity` one of `info`, `minor`, `major`, `critical`, `blocker`, anything else read as `major` |
 
-Findings with a `path` reach the Code Quality report and GitHub
-annotations; every finding reaches the note and the log.
+Findings with a `path` reach the Code Quality report and are attached
+to their file and line as GitHub annotations; every finding reaches the
+note, the log and, on GitHub, an annotation.
 
 ## How ci-judge fills it
 
