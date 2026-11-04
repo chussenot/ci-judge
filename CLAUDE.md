@@ -52,8 +52,13 @@ The README says why; `docs/` says how (`docs/index.md` is the map,
 - The verdict file's first four fields are the gate's contract
   (`verdict::validate_loose` is the gate's own validation); everything
   else sits under `ci_judge`. `run` writes no file when it cannot judge,
-  so the gate sees a gate error, never a pass. Exit statuses are
-  `src/error.rs`: 0/1/2/3 with the meanings the README states.
+  so the gate sees a gate error, never a pass; the GitLab job swallows
+  `run`'s status (`|| echo`, `examples/gitlab-ci.yml`) so the block's
+  script runs at all. Exit statuses are `src/error.rs`: 0/1/2/3 with
+  the meanings the README states. A finding's description carries no
+  number unless its template asks (`{p}`): the gates fingerprint on it.
+  A decision that changes the seam gets an ADR under
+  `docs/project/decisions/`.
 - Nothing here generates text. A finding is a template filled from the
   item and the probability; a summary is counts. A System One backend
   returns probabilities; thresholds and bars are policy in the rubric and

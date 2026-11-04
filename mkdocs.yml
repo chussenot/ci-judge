@@ -72,3 +72,5 @@ nav:
       - Architecture: project/architecture.md
       - Contributing: project/contributing.md
       - Releasing: project/releasing.md
+      - Decisions:
+          - "0001: Fit the judge-gate block": project/decisions/0001-fit-the-judge-gate-block.md

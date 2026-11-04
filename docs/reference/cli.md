@@ -37,7 +37,9 @@ Exit 0 when a verdict was written. Exit 1 when a collector that is not
 optional, or a call after the crate's retries, failed. Exit 2 before any
 call: no rubric, a manifest or `.jud` the reader refuses, a question the
 rubric lacks, a per-item question without `when`, a local blocker, an
-untuned model, no key. On 1 and 2 no verdict file is written.
+untuned model, no key. On 1 and 2 no verdict file is written. In a
+GitLab `before_script`, swallow the status (`ci-judge run || echo …`) so
+the block's script runs and reports the gate error itself.
 
 ## `explain`
 

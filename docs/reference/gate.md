@@ -56,7 +56,7 @@ either way.
 
 | Severity | Location | Finding |
 |---|---|---|
-| blocker | `infra/rds.tf:12` | delete of aws_db_instance.main is not acknowledged … (p=0.20, threshold 0.70) |
+| blocker | `infra/rds.tf:12` | delete of aws_db_instance.main is not acknowledged … |
 
 <details><summary>rubric infra-plan, model jev-1.14.0, 3 request(s), 2310 input tokens</summary> … answers … </details>
 

@@ -19,7 +19,7 @@ requests are made of ([The granularity rule](../concepts/granularity.md)).
 |---|---|---|---|
 | `artifact` | a file, or every file a glob matches, under the working directory | by extension: `.xml` junit, `.json` json, `.diff`/`.patch` diffhunks, else text | the artifact of an earlier job (`needs`) |
 | `diff` | `git diff --merge-base <base> HEAD`; without a base, the last commit | diffhunks | the merge base in the checkout (`GIT_DEPTH: 0`, `fetch-depth: 0`) |
-| `mr` | the change under review: `title`, `description`, `labels`, `author`, `source_branch`, `target_branch`, `source_sha`, `base_sha`, `draft`, `url`, `number` | none | a merge request pipeline, a pull request event, or `CI_JUDGE_TITLE` and `CI_JUDGE_DESCRIPTION` |
+| `mr` | the change under review: `title`, `description`, `labels`, `author`, `source_branch`, `target_branch`, `source_sha`, `base_sha`, `draft`, `url`, `number` | none | a merge request pipeline (a description GitLab cut at 2700 characters, `CI_MERGE_REQUEST_DESCRIPTION_IS_TRUNCATED`, is read whole from the API, with a token), a pull request event, or `CI_JUDGE_TITLE` and `CI_JUDGE_DESCRIPTION` |
 | `file` | a text file from the checkout | text | |
 | `env` | a variable's value | text | |
 | `joblog` | the failed jobs of this pipeline with the tail of each trace | items per job | GitLab, `CI_PIPELINE_ID`, a token that may read traces |

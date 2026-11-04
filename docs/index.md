@@ -61,5 +61,6 @@ The pages are organised by what you want to do.
 | [Architecture](project/architecture.md) | The C4 model: context, containers, modules, one run |
 | [Contributing](project/contributing.md) | The gates, the hooks, the Claude Code harness, cloud sessions |
 | [Releasing](project/releasing.md) | From `cog bump` to the binaries and the image |
+| [ADR 0001: Fit the judge-gate block](project/decisions/0001-fit-the-judge-gate-block.md) | Why the job swallows `run`'s status, why a description carries no number, how a cut description is read whole |
 
 `CHANGELOG.md` at the repository root is Keep a Changelog.

@@ -44,7 +44,21 @@ pub async fn collect(spec: &StateSource, platform: &Platform) -> Result<Reduced,
             .map_err(|e| CollectError(e.message))
         }
         SourceKind::Mr => {
-            let change = platform.change();
+            let mut change = platform.change();
+            if let Platform::GitLab(gl) = platform
+                && std::env::var("CI_MERGE_REQUEST_DESCRIPTION_IS_TRUNCATED").as_deref()
+                    == Ok("true")
+            {
+                // A judged description must be the whole one: a cut text
+                // loses the acknowledgement a question looks for.
+                change.description = gl
+                    .description()
+                    .await
+                    .context(
+                        "the description is longer than the 2700 characters GitLab gives the job",
+                    )
+                    .map_err(fail)?;
+            }
             Ok(Reduced {
                 value: serde_json::to_value(&change).unwrap_or(Value::Null),
                 items: Vec::new(),

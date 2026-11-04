@@ -269,6 +269,34 @@ impl GitLab {
             .unwrap_or_else(|| self.project_id.clone())
     }
 
+    /// The whole description of the merge request. GitLab cuts
+    /// `CI_MERGE_REQUEST_DESCRIPTION` at 2700 characters and says so in
+    /// `CI_MERGE_REQUEST_DESCRIPTION_IS_TRUNCATED`; the API does not.
+    pub async fn description(&self) -> anyhow::Result<String> {
+        let iid = self
+            .mr_iid
+            .ok_or_else(|| anyhow!("no CI_MERGE_REQUEST_IID"))?;
+        let url = format!(
+            "{}/projects/{}/merge_requests/{iid}",
+            self.api_url,
+            self.project()
+        );
+        let mr: Value = self
+            .auth(self.client()?.get(&url))?
+            .send()
+            .await
+            .and_then(|r| r.error_for_status())
+            .context("reading the merge request")?
+            .json()
+            .await
+            .context("decoding the merge request")?;
+        Ok(mr
+            .get("description")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_owned())
+    }
+
     /// The failed jobs of this pipeline with the last `tail_lines` of each
     /// trace. Reads jobs with the job token where it can; traces need
     /// `GITLAB_TOKEN` on most instances.

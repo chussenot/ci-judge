@@ -38,7 +38,14 @@ judge-gate:plan:
   before_script:
     - !reference [.ci-judge:install, before_script]
     # TYPESAFE_API_KEY and GITLAB_TOKEN come from your secret store, never from a file in the job.
-    - ci-judge run --record recordings/infra-plan --cases-out recordings/infra-plan-cases.jud
+    # A failing before_script ends the job before the block's script runs: swallow the
+    # status, and the block reports the missing verdict file as a gate error (exit 2).
+    - ci-judge run --record recordings/infra-plan --cases-out recordings/infra-plan-cases.jud || echo "ci-judge: could not judge (status $?); the gate reports a gate error"
   artifacts:
     when: always
-    paths: [recordings/]
+    paths:                                       # extends replaces arrays: the block's four paths, then ours
+      - judge-gate.verdict.json
+      - judge-gate.env
+      - gl-code-quality-judge-gate.json
+      - judge-gate.route.yml
+      - recordings/

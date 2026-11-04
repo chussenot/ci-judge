@@ -249,33 +249,22 @@ pub fn build(ctx: Context<'_>, answered: &[Answered]) -> Result<VerdictFile> {
                 .as_deref()
                 .map_or_else(|| format!("{id}: {{verdict}}"), str::to_owned);
             let description = render(&text, &a.request.state, &extra);
+            // No number in the text unless the template asks for `{p}`: the
+            // gates fingerprint `path:line:description`, and a probability
+            // that moves by a hundredth would make every finding new.
             match outcome {
                 Outcome::Fails => {
                     fail |= manifest.fail_on.contains(&q.severity);
                     findings.push(Finding {
                         severity: q.severity,
-                        description: format!(
-                            "{description} (p={}, threshold {})",
-                            extra.get("p").cloned().unwrap_or_else(|| extra
-                                .get("confidence")
-                                .cloned()
-                                .unwrap_or_default()),
-                            extra["threshold"]
-                        ),
+                        description,
                         path: a.request.path.clone(),
                         line: a.request.line,
                     });
                 }
                 Outcome::Undecided => findings.push(Finding {
                     severity: Severity::Info,
-                    description: format!(
-                        "undecided: {description} (p={}, threshold {})",
-                        extra.get("p").cloned().unwrap_or_else(|| extra
-                            .get("confidence")
-                            .cloned()
-                            .unwrap_or_default()),
-                        extra["threshold"]
-                    ),
+                    description: format!("undecided: {description}"),
                     path: a.request.path.clone(),
                     line: a.request.line,
                 }),

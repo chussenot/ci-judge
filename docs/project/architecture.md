@@ -157,7 +157,10 @@ sequenceDiagram
 Where the run stops early: a manifest the reader refuses or a model the
 rubric was not tuned on is exit 2 before any call; a collector or a call
 that fails is exit 1; both leave no verdict file, so the gate reports a
-gate error and never a pass.
+gate error and never a pass. The job must let the gate run after that
+status: on GitLab, `ci-judge run || echo …` in `before_script`
+([Run in GitLab CI](../guides/gitlab.md)); the GitHub action does so
+([ADR 0001](decisions/0001-fit-the-judge-gate-block.md)).
 
 ## Where to read next
 

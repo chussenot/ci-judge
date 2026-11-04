@@ -40,8 +40,10 @@ note, the log and, on GitHub, an annotation.
   file-safe, or absent.
 - `findings` has one entry per failing question, with the item's
   locator, and one `info` entry per undecided answer, its description
-  prefixed `undecided:`. Descriptions end with `(p=0.20, threshold 0.70)`
-  so a reviewer sees the number and the bar.
+  prefixed `undecided:`. A description holds no probability unless its
+  template asks for `{p}`: the gates fingerprint `path:line:description`,
+  and a number that moves between runs would make every finding new. The
+  probability is in `ci_judge.answers`.
 
 ## The audit trail
 

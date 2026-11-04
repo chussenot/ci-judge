@@ -55,10 +55,17 @@ judge-gate:plan:
   before_script:
     - !reference [.ci-judge:install, before_script]
     # TYPESAFE_API_KEY and GITLAB_TOKEN come from your secret store, never from a file in the job.
-    - ci-judge run --record recordings/infra-plan --cases-out recordings/infra-plan-cases.jud
+    # A failing before_script ends the job before the block's script runs: swallow the
+    # status, and the block reports the missing verdict file as a gate error (exit 2).
+    - ci-judge run --record recordings/infra-plan --cases-out recordings/infra-plan-cases.jud || echo "ci-judge: could not judge (status $?); the gate reports a gate error"
   artifacts:
     when: always
-    paths: [recordings/]
+    paths:                                       # extends replaces arrays: the block's four paths, then ours
+      - judge-gate.verdict.json
+      - judge-gate.env
+      - gl-code-quality-judge-gate.json
+      - judge-gate.route.yml
+      - recordings/
 ```
 
 `examples/gitlab-ci.yml` in the repository is this file.
@@ -70,7 +77,7 @@ judge-gate:plan:
 | the merge base in the checkout | the `diff` source runs `git diff --merge-base` | `GIT_DEPTH: 0` |
 | the artifacts of earlier jobs | `artifact` sources read files from `needs` | `needs: [job]` |
 | `TYPESAFE_API_KEY` (and `TYPESAFE_BASE_URL` for another server) | the backend | a masked, protected variable, or your secret store in `before_script` |
-| `GITLAB_TOKEN` with the `api` scope | the block posts the note; ci-judge reads failed job traces with it | a short-lived project token from your secret store; the job token cannot create notes |
+| `GITLAB_TOKEN` with the `api` scope | the block posts the note; ci-judge reads failed job traces, and a merge request description longer than 2700 characters, with it | a short-lived project token from your secret store; the job token cannot create notes |
 | `CI_MERGE_REQUEST_*` | the `mr` source and the override label | a merge request pipeline (`rules: - if: $CI_MERGE_REQUEST_IID`) |
 
 ## Fail open or closed
@@ -79,7 +86,12 @@ The block's default, `allow_failure: exit_codes: [2, 3]`, lets a gate
 error (no verdict file, an invalid one) and a warning pass the pipeline:
 a judge that is down warns. In `block` mode that is a hole, so the job
 above sets `[3]`. ci-judge never writes a verdict when it cannot judge,
-so the two cases are never confused with a pass.
+so the two cases are never confused with a pass. The status of `ci-judge
+run` itself must not end the job: a non-zero `before_script` skips the
+block's `script`, and the pipeline would carry `run`'s status (1 or 2)
+with no log line, note or artifact from the block. The `|| echo` above
+swallows it; the block then finds no verdict file and exits 2
+([ADR 0001](../project/decisions/0001-fit-the-judge-gate-block.md)).
 
 ## The override
 
@@ -99,7 +111,7 @@ judge-gate:risk:
     CI_JUDGE_RUBRIC: change-risk
   before_script:
     - !reference [.ci-judge:install, before_script]
-    - ci-judge run
+    - ci-judge run || echo "ci-judge: could not judge (status $?); the gate reports a gate error"
 
 judge-gate:route:
   needs: [judge-gate:risk]

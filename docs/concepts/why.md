@@ -74,9 +74,9 @@ as a failure, what blocks: all policy, in two files a reviewer can read.
 
 ## What it costs
 
-- **No prose.** A finding is a template filled from the item and the
-  probability. A reviewer reads "delete of aws_db_instance.main is not
-  acknowledged (p=0.20, threshold 0.70)", not a paragraph.
+- **No prose.** A finding is a template filled from the item. A reviewer
+  reads "delete of aws_db_instance.main is not acknowledged", not a
+  paragraph; the probability behind it is in the audit trail.
 - **Calibration work.** A rubric starts in shadow mode, collects
   recordings, needs labelled cases and a tune before it may warn, and
   more before it may block. [Modes and promotion](modes.md) is the

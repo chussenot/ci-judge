@@ -186,6 +186,12 @@ async fn verdict_fails_on_a_blocker_and_passes_the_blocks_validation() {
             .iter()
             .any(|f| f.description.contains("manual steps"))
     );
+    // The gates fingerprint `path:line:description`: no probability in it.
+    assert!(
+        file.findings.iter().all(|f| !f.description.contains("(p=")),
+        "{:?}",
+        file.findings
+    );
     assert_eq!(file.ci_judge.requests, 3);
     assert_eq!(file.ci_judge.model.as_deref(), Some("fake-1.0"));
     // The block's jq validator, in Rust.
@@ -284,6 +290,46 @@ async fn gate_applies_every_mode_like_the_block() {
             .unwrap()
             .contains("JUDGE_GATE_ROUTE=fail")
     );
+}
+
+/// GitLab cuts `CI_MERGE_REQUEST_DESCRIPTION` at 2700 characters; the
+/// `mr` source then reads the whole text from the merge request API.
+#[tokio::test]
+async fn gitlab_description_comes_from_the_merge_request_api() {
+    use std::io::{Read, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let api_url = format!("http://{}", listener.local_addr().unwrap());
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut buf = [0u8; 4096];
+        let n = stream.read(&mut buf).unwrap();
+        let body = r#"{"iid":7,"description":"the whole text"}"#;
+        write!(
+            stream,
+            "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+            body.len()
+        )
+        .unwrap();
+        String::from_utf8_lossy(&buf[..n]).to_ascii_lowercase()
+    });
+    let gitlab = ci_judge::platform::GitLab {
+        api_url,
+        project_id: "42".to_owned(),
+        project_path: None,
+        pipeline_id: None,
+        job_name: None,
+        job_url: None,
+        mr_iid: Some(7),
+        token: Some("t".to_owned()),
+        job_token: None,
+    };
+    assert_eq!(gitlab.description().await.unwrap(), "the whole text");
+    let request = server.join().unwrap();
+    assert!(
+        request.starts_with("get /projects/42/merge_requests/7 "),
+        "{request}"
+    );
+    assert!(request.contains("private-token: t"), "{request}");
 }
 
 #[tokio::test]

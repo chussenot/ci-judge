@@ -42,7 +42,8 @@ warns; a consumer that wants to fail closed in `block` mode sets `[3]`.
 The GitHub action's `fail-on` input does the same job
 ([Run in GitHub Actions](../guides/github.md)). ci-judge writes no
 verdict file when it cannot judge, so a gate always sees that case as a
-gate error and never as a pass.
+gate error and never as a pass, provided the job lets the gate run after
+a failed `run` ([Run in GitLab CI](../guides/gitlab.md)).
 
 ## Undecided
 

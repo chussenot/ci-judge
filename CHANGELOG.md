@@ -27,9 +27,26 @@ All notable changes to ci-judge are documented here. The format follows
 
 ### Changed
 
+- A finding's description no longer ends with `(p=…, threshold …)`: the
+  gates fingerprint `path:line:description`, and the number moved between
+  runs, so every finding showed as new. A `finding` template that wants
+  the number uses `{p}` and `{threshold}`; the probability stays in
+  `ci_judge.answers`
+  ([ADR 0001](docs/project/decisions/0001-fit-the-judge-gate-block.md)).
 - The README states why the binary exists and points at the docs; what
   it held moved to the pages above. `CONTRIBUTING.md` points at
   `docs/project/`.
+
+### Fixed
+
+- The `mr` source reads the whole description from the merge request API
+  when GitLab cut `CI_MERGE_REQUEST_DESCRIPTION` at 2700 characters
+  (`CI_MERGE_REQUEST_DESCRIPTION_IS_TRUNCATED`); a failed read is a
+  collection failure, not a judgment of a cut text.
+- `examples/gitlab-ci.yml` and the GitLab guide swallow `ci-judge run`'s
+  status, since a failing `before_script` skipped the block's script, and
+  restate the block's artifact paths, which `extends` had replaced with
+  `recordings/`.
 
 ## [0.1.0] - 2026-11-04
 

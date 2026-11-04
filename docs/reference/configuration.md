@@ -61,7 +61,7 @@ local; `CI_JUDGE_PLATFORM` overrides.
 
 | Need | GitLab | GitHub | Local |
 |---|---|---|---|
-| the change | `CI_MERGE_REQUEST_IID`, `_TITLE`, `_DESCRIPTION`, `_LABELS`, `_SOURCE_BRANCH_NAME`, `_TARGET_BRANCH_NAME`, `_DIFF_BASE_SHA` (else `_TARGET_BRANCH_SHA`), `CI_COMMIT_SHA`, `GITLAB_USER_LOGIN` | the `pull_request` object of the event at `GITHUB_EVENT_PATH` (`number`, `title`, `body`, `labels`, `head`, `base`, `user`, `draft`, `html_url`), `GITHUB_SHA` | `CI_JUDGE_TITLE`, `CI_JUDGE_DESCRIPTION`, `CI_JUDGE_BASE` |
+| the change | `CI_MERGE_REQUEST_IID`, `_TITLE`, `_DESCRIPTION` (and `_DESCRIPTION_IS_TRUNCATED`, which sends the `mr` source to the API), `_LABELS`, `_SOURCE_BRANCH_NAME`, `_TARGET_BRANCH_NAME`, `_DIFF_BASE_SHA` (else `_TARGET_BRANCH_SHA`), `CI_COMMIT_SHA`, `GITLAB_USER_LOGIN` | the `pull_request` object of the event at `GITHUB_EVENT_PATH` (`number`, `title`, `body`, `labels`, `head`, `base`, `user`, `draft`, `html_url`), `GITHUB_SHA` | `CI_JUDGE_TITLE`, `CI_JUDGE_DESCRIPTION`, `CI_JUDGE_BASE` |
 | the API | `CI_API_V4_URL`, `CI_PROJECT_ID`, `CI_PROJECT_PATH`, `CI_SERVER_URL`; `GITLAB_TOKEN` (`PRIVATE-TOKEN`) or `CI_JOB_TOKEN` (`JOB-TOKEN`, reads only) | `GITHUB_API_URL`, `GITHUB_REPOSITORY`, `GITHUB_TOKEN` | none |
 | failed job traces | `CI_PIPELINE_ID` and a token that may read traces (`joblog` source) | not available | not available |
 | the gate's report | `CI_JOB_NAME` (the note's marker), `CI_JOB_URL` | `GITHUB_JOB`, `GITHUB_RUN_ID`, `GITHUB_OUTPUT`, `GITHUB_STEP_SUMMARY` | files under `--out` |
