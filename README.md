@@ -220,6 +220,12 @@ mise run jud:check      # the bundled rubrics through the judgment crate's own c
 the release and the Claude Code harness (`.claude/`: six agents, three
 skills, the hooks and the cloud-session bootstrap).
 
+## Architecture
+
+`docs/architecture.md` is the C4 model in Mermaid: the systems around the
+binary, the containers of a CI job, the modules of `src/`, and one `run`
+as a sequence.
+
 ## Status
 
 0.1.0. The judgment layer is complete for the three bundled rubrics; the
