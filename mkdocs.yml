@@ -74,3 +74,5 @@ nav:
       - Releasing: project/releasing.md
       - Decisions:
           - "0001: Fit the judge-gate block": project/decisions/0001-fit-the-judge-gate-block.md
+      - Research:
+          - "Study: the mechanics of ci-judge": project/research/mechanics-study.md

@@ -62,5 +62,6 @@ The pages are organised by what you want to do.
 | [Contributing](project/contributing.md) | The gates, the hooks, the Claude Code harness, cloud sessions |
 | [Releasing](project/releasing.md) | From `cog bump` to the binaries and the image |
 | [ADR 0001: Fit the judge-gate block](project/decisions/0001-fit-the-judge-gate-block.md) | Why the job swallows `run`'s status, why a description carries no number, how a cut description is read whole |
+| [Study: the mechanics of ci-judge](project/research/mechanics-study.md) | What the field does for the same mechanics, where the implementation is wrong or thin, which crates earn their place, and the three slices of work ranked first |
 
 `CHANGELOG.md` at the repository root is Keep a Changelog.
