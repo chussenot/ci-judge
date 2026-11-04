@@ -145,4 +145,5 @@ run = ["cog check", "cog bump --auto --dry-run"]
 
 [tasks.release]
 description = "Bump, changelog, tag; then push the tag to release"
-run = ["cog bump --auto", "echo 'now: git push --follow-tags'"]
+# A lightweight tag, which `git push --follow-tags` would leave behind.
+run = ["cog bump --auto", "echo 'now: git push origin main --tags'"]
