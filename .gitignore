@@ -1,0 +1,7 @@
+/target
+/ci-judge-requests
+judge-gate.verdict.json
+judge-gate.env
+judge-gate.route.yml
+gl-code-quality-judge-gate.json
+*.tmp

@@ -1,0 +1,24 @@
+apiVersion: jud/v1
+kind: Cases
+metadata:
+  name: mr-hygiene-cases
+  minor: 4
+  description: Synthetic merge requests labelled by hand.
+spec:
+  rubric: mr-hygiene
+  cases:
+    - id: well-written
+      state:
+        mr: {title: "Retry failed webhook deliveries with backoff", description: "Deliveries that fail with a 5xx are retried three times with exponential backoff. Customers reported lost events during partner outages (INC-204). No change to the payload.", target_branch: main}
+        diff: {files: [src/webhook/deliver.rs, src/webhook/retry.rs], additions: 80, deletions: 12, changed: [{path: src/webhook/retry.rs, hunks: "+fn backoff(attempt) ..."}]}
+      expect: {explains_what: true, explains_why: true, matches_diff: true, breaking_flagged: true}
+    - id: ticket-only
+      state:
+        mr: {title: "PROJ-123", description: "PROJ-123", target_branch: main}
+        diff: {files: [src/api/users.rs], additions: 40, deletions: 30, changed: [{path: src/api/users.rs, hunks: "-pub fn email(&self)\n+pub fn primary_email(&self)"}]}
+      expect: {explains_what: false, explains_why: false, matches_diff: false, breaking_flagged: false}
+    - id: what-but-not-why
+      state:
+        mr: {title: "Bump timeout to 30s", description: "Sets the HTTP client timeout to 30 seconds.", target_branch: main}
+        diff: {files: [config/http.yml], additions: 1, deletions: 1, changed: [{path: config/http.yml, hunks: "-timeout: 10\n+timeout: 30"}]}
+      expect: {explains_what: true, explains_why: false, matches_diff: true, breaking_flagged: true}

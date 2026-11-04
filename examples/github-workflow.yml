@@ -1,0 +1,55 @@
+# A pull request gate on GitHub Actions with ci-judge.
+#
+# The judge needs the diff's history (fetch-depth: 0) and a System One
+# backend: TYPESAFE_API_KEY for the hosted API, or TYPESAFE_BASE_URL for
+# any server that speaks POST /v1/systemone. GITHUB_TOKEN posts the
+# comment and the annotations.
+name: judge
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  mr-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: chussenot/ci-judge@v0.1.0
+        with:
+          rubric: mr-hygiene
+          mode: advise            # shadow, advise, warn, block or route
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # A rubric over an artifact an earlier job produced.
+  infra-plan:
+    runs-on: ubuntu-latest
+    needs: [terraform-plan]      # a job that uploads tfplan.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+      - uses: chussenot/ci-judge@v0.1.0
+        with:
+          rubric: infra-plan
+          mode: warn
+          record: recordings/infra-plan     # shadow-style recording beside the verdict
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: judge-infra-plan
+          path: |
+            judge-gate.verdict.json
+            recordings/

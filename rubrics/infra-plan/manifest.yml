@@ -1,0 +1,59 @@
+# ci-judge manifest for the infra-plan rubric: where the evidence comes
+# from, how it is shaped into requests, what a failing answer means.
+# The rubric itself is infra-plan.jud; the .jud reader refuses unknown
+# fields, so everything CI-specific lives here.
+name: infra-plan
+owner: platform
+description: >-
+  Whether each destructive Terraform change is acknowledged in the merge
+  request, and whether the plan as a whole is reversible.
+rubric: infra-plan.jud
+cases: infra-plan-cases.jud
+recordings: recordings
+state:
+  - key: plan
+    source: artifact
+    path: tfplan.json          # `terraform show -json tfplan > tfplan.json` in the plan job
+    reduce: tfplan
+    priority: 1
+  - key: mr
+    source: mr
+    priority: 2
+  - key: runbook
+    source: file
+    path: docs/runbook.md
+    optional: true
+    priority: 4
+requests:
+  - name: change               # one request per destructive change; state carries `change`
+    items: plan
+    item_key: change
+    filter:
+      action: [delete, replace]
+    max_items: 25
+  - name: plan                 # one request over the whole plan
+questions:
+  destructive_ack:
+    request: change
+    severity: blocker
+    fails_when: "no"
+    undecided_margin: 0.1
+    finding: "{change.action} of {change.address} is not acknowledged in the merge request description"
+  rollback_obvious:
+    request: plan
+    severity: minor
+    fails_when: "no"
+    finding: "Reverting the merge request would need manual steps that are not written down"
+  blast_radius:
+    request: plan
+    severity: info
+    report_only: true
+fail_on: [blocker, critical]
+summary: "{failed} failing check(s) over {items} destructive change(s); {undecided} undecided. {worst}"
+promotion:
+  accuracy_at_least:
+    destructive_ack: 0.9
+    rollback_obvious: 0.85
+  ece_at_most:
+    "*": 0.1
+  labelled_at_least: 20

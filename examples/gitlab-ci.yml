@@ -1,0 +1,44 @@
+# ci-judge in a GitLab merge request pipeline, with a `judge-gate` block
+# that validates the verdict file and applies the mode. The judge runs in
+# before_script; the block's script is the decision.
+#
+# The block is any hidden job that reads judge-gate.verdict.json and exits
+# 0 pass, 1 blocked, 2 gate error, 3 warning. `ci-judge gate` is one such
+# implementation when no block is available.
+include:
+  - project: 'your-group/building-blocks'
+    file: 'blocks/judge-gate/block.yml'
+    ref: 'judge_gate/v0.1.0'
+
+variables:
+  CI_JUDGE_VERSION: "0.1.0"
+  CI_JUDGE_URL: "https://github.com/chussenot/ci-judge/releases/download"
+
+.ci-judge:install:
+  before_script:
+    - |
+      mkdir -p "${HOME}/.local/bin"
+      curl -fsSL -o "${HOME}/.local/bin/ci-judge" "${CI_JUDGE_URL}/v${CI_JUDGE_VERSION}/ci-judge-x86_64-unknown-linux-musl"
+      curl -fsSL -o /tmp/ci-judge.sha256 "${CI_JUDGE_URL}/v${CI_JUDGE_VERSION}/ci-judge-x86_64-unknown-linux-musl.sha256"
+      (cd "${HOME}/.local/bin" && echo "$(cut -d' ' -f1 /tmp/ci-judge.sha256)  ci-judge" | sha256sum -c -) || { echo "ci-judge checksum mismatch"; exit 2; }
+      chmod +x "${HOME}/.local/bin/ci-judge"
+      export PATH="${HOME}/.local/bin:${PATH}"
+      ci-judge version
+
+judge-gate:plan:
+  extends: .judge-gate:decide
+  stage: test
+  needs: [terraform-plan]                      # tfplan.json artifact
+  variables:
+    JUDGE_GATE_MODE: warn
+    CI_JUDGE_RUBRIC: infra-plan
+    GIT_DEPTH: 0
+  allow_failure:
+    exit_codes: [3]                            # fail closed: a broken judge fails the job
+  before_script:
+    - !reference [.ci-judge:install, before_script]
+    # TYPESAFE_API_KEY and GITLAB_TOKEN come from your secret store, never from a file in the job.
+    - ci-judge run --record recordings/infra-plan --cases-out recordings/infra-plan-cases.jud
+  artifacts:
+    when: always
+    paths: [recordings/]

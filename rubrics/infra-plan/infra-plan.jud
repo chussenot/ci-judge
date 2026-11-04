@@ -1,0 +1,56 @@
+# Whether an infrastructure change is safe to merge: one request per
+# destructive change (the state carries `change`), one request for the
+# whole plan (the state carries `plan`). `when` asks each question only in
+# the request that has its state path, so one rubric serves both shapes.
+# Format: https://github.com/chussenot/judgment/blob/main/docs/reference/jud-format.md
+apiVersion: jud/v1
+kind: Rubric
+metadata:
+  name: infra-plan
+  minor: 4
+  version: 1
+  description: >-
+    Whether each destructive Terraform change is acknowledged in the merge
+    request, and whether the plan as a whole is reversible and how far it
+    reaches.
+spec:
+  questions:
+    destructive_ack:
+      type: noul
+      when: change
+      instructions: >-
+        Does `mr.description` explicitly acknowledge the `change.action` of
+        the resource `change.address` and give a reason for it?
+      criteria:
+        true: the description names this resource, or its unmistakable role, says it will be destroyed or replaced, and gives a reason
+        false: the description does not mention it, mentions it without saying it is destroyed or replaced, or gives no reason
+    rollback_obvious:
+      type: noul
+      when: plan
+      instructions: >-
+        Would reverting this merge request restore the previous state of
+        `plan.changes` without manual steps, or are the manual steps written
+        in `mr.description` or `runbook`?
+      criteria:
+        true: every change is reversible by re-applying the previous configuration, or the manual steps are written down
+        false: at least one change loses data or state that a revert cannot bring back, and nothing says how to recover
+    blast_radius:
+      type: score
+      when: plan
+      instructions: >-
+        How far does a failure of `plan.changes` reach, given `mr.target_branch`
+        and the resources touched?
+      criteria: [none, team, platform, company]
+
+  # Gates: where an answer becomes an action. Untuned defaults until a
+  # shadow run has recorded enough labelled cases for `jud tune`.
+  policy:
+    destructive_ack:
+      threshold: 0.7
+      note: untuned; a blocker question starts strict and `jud tune` moves it
+    rollback_obvious:
+      threshold: 0.6
+    blast_radius:
+      confidence: 0.6
+      level_at_least: platform
+      note: diagnostic only; reported, never a finding

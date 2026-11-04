@@ -1,0 +1,44 @@
+# Labelled cases for infra-plan.jud, in the shape a shadow run writes
+# them: one case per destructive change (state carries `change`) and one
+# per whole plan (state carries `plan`). Synthetic; a real set comes from
+# `ci-judge run --cases-out` and reviewers filling `expect`.
+apiVersion: jud/v1
+kind: Cases
+metadata:
+  name: infra-plan-cases
+  minor: 4
+  description: Synthetic destructive changes and plans labelled by hand.
+spec:
+  rubric: infra-plan
+  cases:
+    - id: acknowledged-delete
+      state:
+        change: {address: aws_db_instance.legacy, type: aws_db_instance, name: legacy, action: delete, path: infra/rds.tf}
+        mr: {title: "Decommission the legacy reporting database", description: "The legacy reporting RDS instance (aws_db_instance.legacy) is deleted: its last consumer moved to the warehouse in March and a final snapshot was taken on 2026-10-30.", target_branch: main}
+      expect: {destructive_ack: true}
+      tags: [change, delete]
+    - id: silent-delete
+      state:
+        change: {address: aws_db_instance.main, type: aws_db_instance, name: main, action: delete, path: infra/rds.tf}
+        mr: {title: "Tidy up infra module", description: "Refactor variable names and bump the provider.", target_branch: main}
+      expect: {destructive_ack: false}
+      tags: [change, delete]
+    - id: mentioned-without-reason
+      state:
+        change: {address: aws_security_group.app, type: aws_security_group, name: app, action: replace, path: infra/sg.tf}
+        mr: {title: "Security group changes", description: "Replaces the app security group.", target_branch: main}
+      expect: {destructive_ack: false}
+      tags: [change, replace]
+      note: named but no reason given
+    - id: reversible-plan
+      state:
+        plan: {summary: {update: 3}, changes: [{address: aws_lb_listener.https, action: update}, {address: aws_iam_policy.read, action: update}]}
+        mr: {title: "Tighten listener policy", description: "Listener and IAM policy updates; revert re-applies the previous config.", target_branch: main}
+      expect: {rollback_obvious: true, blast_radius: team}
+      tags: [plan]
+    - id: irreversible-plan
+      state:
+        plan: {summary: {delete: 1, update: 1}, changes: [{address: aws_db_instance.main, action: delete}, {address: aws_lb_listener.https, action: update}]}
+        mr: {title: "Move DB", description: "Drops the old database.", target_branch: main}
+      expect: {rollback_obvious: false, blast_radius: platform}
+      tags: [plan]

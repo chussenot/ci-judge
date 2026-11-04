@@ -1,0 +1,45 @@
+# ci-judge manifest for mr-hygiene: one global request over the merge
+# request's own fields and a summary of its diff.
+name: mr-hygiene
+owner: platform
+description: Whether a merge request explains what it changes and why.
+rubric: mr-hygiene.jud
+cases: mr-hygiene-cases.jud
+recordings: recordings
+state:
+  - key: mr
+    source: mr
+    priority: 1
+  - key: diff
+    source: diff
+    priority: 2
+    optional: true
+requests:
+  - name: mr
+questions:
+  explains_what:
+    request: mr
+    severity: minor
+    fails_when: "no"
+    finding: "The description does not say what the change does"
+  explains_why:
+    request: mr
+    severity: minor
+    fails_when: "no"
+    finding: "The description does not say why the change is made"
+  matches_diff:
+    request: mr
+    severity: major
+    fails_when: "no"
+    undecided_margin: 0.1
+    finding: "The description does not match the files changed"
+  breaking_flagged:
+    request: mr
+    severity: major
+    fails_when: "no"
+    finding: "A change that looks breaking is not flagged as such"
+fail_on: [blocker, critical]
+promotion:
+  accuracy_at_least:
+    "*": 0.85
+  labelled_at_least: 20

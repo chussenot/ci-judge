@@ -1,0 +1,68 @@
+# ci-judge manifest for failed-job-triage: one request per failing test
+# (state carries `test`), one per failed job (state carries `job`), and
+# one over the whole picture. Advisory by design: nothing here blocks.
+name: failed-job-triage
+owner: platform
+description: Why a pipeline failed, and whether the change under review caused it.
+rubric: failed-job-triage.jud
+cases: failed-job-triage-cases.jud
+recordings: recordings
+state:
+  - key: tests
+    source: artifact
+    path: "**/junit*.xml"
+    reduce: junit
+    priority: 1
+    optional: true
+  - key: jobs
+    source: joblog
+    tail_lines: 150
+    priority: 2
+    optional: true
+  - key: diff
+    source: diff
+    priority: 3
+    optional: true
+  - key: mr
+    source: mr
+    priority: 4
+requests:
+  - name: test
+    items: tests
+    item_key: test
+    max_items: 10
+  - name: job
+    items: jobs
+    item_key: job
+    max_items: 5
+  - name: pipeline
+questions:
+  test_caused_by_change:
+    request: test
+    severity: major
+    fails_when: "yes"
+    undecided_margin: 0.1
+    finding: "{test.classname}.{test.name} fails because of this change"
+  test_flaky:
+    request: test
+    severity: info
+    report_only: true
+  job_cause:
+    request: job
+    severity: info
+    report_only: true
+  job_caused_by_change:
+    request: job
+    severity: major
+    fails_when: "yes"
+    finding: "Job {job.name} fails because of this change"
+  pipeline_verdict:
+    request: pipeline
+    severity: info
+    report_only: true
+fail_on: []
+summary: "{failed} failure(s) attributed to this change; {undecided} undecided."
+promotion:
+  accuracy_at_least:
+    "*": 0.85
+  labelled_at_least: 20

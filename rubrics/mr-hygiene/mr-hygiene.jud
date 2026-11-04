@@ -1,0 +1,52 @@
+# Whether a merge request is written for its reviewers: what, why, and
+# whether the description matches the diff. One request, the state
+# carries `mr` and `diff`.
+# Format: https://github.com/chussenot/judgment/blob/main/docs/reference/jud-format.md
+apiVersion: jud/v1
+kind: Rubric
+metadata:
+  name: mr-hygiene
+  minor: 4
+  version: 1
+  description: Whether a merge request explains what it changes and why, and matches its diff.
+spec:
+  questions:
+    explains_what:
+      type: noul
+      instructions: Does `mr.description` say what the change does?
+      criteria:
+        true: a reader learns what behaviour, configuration or structure changes
+        false: empty, a ticket key alone, or words that do not say what changes
+    explains_why:
+      type: noul
+      instructions: Does `mr.description` say why the change is made?
+      criteria:
+        true: a reason, a problem solved, a request or a linked issue with its purpose stated
+        false: no reason given, or only "as discussed"
+    matches_diff:
+      type: noul
+      when: diff
+      instructions: >-
+        Do `mr.title` and `mr.description` describe the files and hunks in
+        `diff.changed`, with nothing substantial in the diff left unmentioned?
+      criteria:
+        true: every substantial change in the diff is covered by the description
+        false: the diff changes something the description does not mention, or the description claims a change the diff does not make
+    breaking_flagged:
+      type: noul
+      when: diff
+      instructions: >-
+        If `diff.changed` removes or renames a public interface, a configuration
+        key, an API field or a database column, does `mr.description` say so?
+      criteria:
+        true: no such removal in the diff, or the description flags it as breaking
+        false: the diff removes or renames something others depend on and the description does not say so
+  policy:
+    explains_what:
+      threshold: 0.6
+    explains_why:
+      threshold: 0.6
+    matches_diff:
+      threshold: 0.6
+    breaking_flagged:
+      threshold: 0.6

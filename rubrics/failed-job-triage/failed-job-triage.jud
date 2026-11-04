@@ -1,0 +1,73 @@
+# Why a pipeline failed. One request per failing test (`test`), one per
+# failed job (`job`), one over everything (`tests`, `jobs`, `diff`, `mr`).
+# Format: https://github.com/chussenot/judgment/blob/main/docs/reference/jud-format.md
+apiVersion: jud/v1
+kind: Rubric
+metadata:
+  name: failed-job-triage
+  minor: 4
+  version: 1
+  description: Whether a failing test or job is caused by the change under review, and what kind of failure it is.
+spec:
+  questions:
+    test_caused_by_change:
+      type: noul
+      when: test
+      instructions: >-
+        Given `test.failure` and the files in `diff.changed`, is this test
+        failing because of the change under review?
+      criteria:
+        true: the failure names, exercises or depends on code the diff changes
+        false: the failure is in code the diff does not touch, or is an environment or timing problem
+    test_flaky:
+      type: noul
+      when: test
+      instructions: >-
+        Does `test.failure` look like a flaky test: a timeout, a race, a
+        network or resource error, rather than a wrong result?
+      criteria:
+        true: timeouts, connection refused, port in use, ordering or timing assertions
+        false: a deterministic assertion on a value, a compile error, a missing symbol
+    job_cause:
+      type: choice
+      when: job
+      instructions: What made the job in `job.trace_tail` fail?
+      criteria:
+        test_failure: one or more tests failed
+        build_error: compilation, type checking or packaging failed
+        infrastructure: a runner, network, registry, quota or permission problem
+        configuration: a missing variable, secret, file or tool
+        timeout: the job or a step exceeded its time limit
+        unknown: the tail does not say
+    job_caused_by_change:
+      type: noul
+      when: job
+      instructions: >-
+        Given `job.trace_tail` and `diff.changed`, did the change under
+        review cause this job to fail?
+      criteria:
+        true: the trace names files, tests or symbols the diff changes
+        false: the trace names an infrastructure, configuration or unrelated problem
+    pipeline_verdict:
+      type: choice
+      when: pipeline
+      instructions: >-
+        Over `tests`, `jobs` and `diff`, what should the author do first?
+      criteria:
+        fix_change: fix the code or tests this change touched
+        retry: retry the pipeline; the failures look transient
+        fix_pipeline: fix the pipeline configuration or environment
+        unclear: the evidence does not say
+  policy:
+    test_caused_by_change:
+      threshold: 0.6
+    test_flaky:
+      threshold: 0.6
+    job_cause:
+      confidence: 0.5
+      fallback: unknown
+    job_caused_by_change:
+      threshold: 0.6
+    pipeline_verdict:
+      confidence: 0.5
+      fallback: unclear

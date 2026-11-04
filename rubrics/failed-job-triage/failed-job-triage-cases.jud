@@ -1,0 +1,27 @@
+apiVersion: jud/v1
+kind: Cases
+metadata:
+  name: failed-job-triage-cases
+  minor: 4
+  description: Synthetic failing tests and jobs labelled by hand.
+spec:
+  rubric: failed-job-triage
+  cases:
+    - id: assertion-in-changed-code
+      state:
+        test: {name: parses_iso_dates, classname: "dates::tests", failure: {kind: failure, message: "assertion failed: left == right", text: "left: 2026-01-02, right: 2026-02-01"}}
+        diff: {files: [src/dates.rs], changed: [{path: src/dates.rs, hunks: "-let (m, d) = (parts[1], parts[2]);\n+let (d, m) = (parts[1], parts[2]);"}]}
+        mr: {title: "Fix date parsing", description: "Swap day and month."}
+      expect: {test_caused_by_change: true, test_flaky: false}
+    - id: connection-refused
+      state:
+        test: {name: fetches_profile, classname: "api::tests", failure: {kind: error, message: "connection refused (os error 111)", text: "reqwest::Error ... connect"}}
+        diff: {files: [README.md], changed: [{path: README.md, hunks: "+## Usage"}]}
+        mr: {title: "Docs", description: "README only."}
+      expect: {test_caused_by_change: false, test_flaky: true}
+    - id: registry-down
+      state:
+        job: {name: build-image, stage: build, trace_tail: "ERROR: failed to solve: registry.internal: dial tcp: i/o timeout\nERROR: Job failed: exit code 1"}
+        diff: {files: [src/main.rs], changed: [{path: src/main.rs, hunks: "+println!(\"hi\")"}]}
+        mr: {title: "Log a greeting", description: "Adds a log line."}
+      expect: {job_cause: infrastructure, job_caused_by_change: false}

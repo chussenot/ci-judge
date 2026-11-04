@@ -1,0 +1,140 @@
+name: ci-judge
+description: Judge a pull request's evidence with a .jud rubric and gate on the verdict.
+author: Clément Hussenot
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  rubric:
+    description: A bundled rubric name (infra-plan, mr-hygiene, failed-job-triage), a manifest path, or a directory with manifest.yml.
+    required: true
+  mode:
+    description: shadow, advise, warn, block or route.
+    default: shadow
+  version:
+    description: The ci-judge release to download; the action's own tag by default.
+    default: ""
+  model:
+    description: The model to ask; else the jud configuration's.
+    default: ""
+  replay:
+    description: Answer from recordings under this directory, no key.
+    default: ""
+  record:
+    description: Record every answer under this directory.
+    default: ""
+  cases-out:
+    description: Append the run's requests as unlabelled cases to this file.
+    default: ""
+  override-label:
+    description: The pull request label that turns a block into a warning.
+    default: judge-gate::override
+  routes:
+    description: Directory of route pipelines, route mode.
+    default: .github/judge-gate
+  allow-untuned:
+    description: Run a rubric tuned on another model.
+    default: "false"
+  extra-args:
+    description: Extra arguments for `ci-judge run`.
+    default: ""
+  fail-on:
+    description: >-
+      Which gate statuses fail the step. `block` (default): only a blocked
+      verdict (status 1); a gate error (2) and a warning (3) annotate the
+      job and pass, as the GitLab block's `allow_failure: exit_codes: [2, 3]`
+      does. `closed`: a gate error fails too, so a broken judge blocks.
+      `warn`: a warning fails too. `never`: the step always passes and the
+      `status` output says what happened.
+    default: block
+
+outputs:
+  verdict:
+    description: pass or fail
+    value: ${{ steps.gate.outputs.verdict }}
+  route:
+    description: The selected route, route mode
+    value: ${{ steps.gate.outputs.route }}
+  status:
+    description: The gate's exit status, 0 pass, 1 blocked, 2 gate error, 3 warning
+    value: ${{ steps.gate.outputs.status }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install ci-judge
+      shell: bash
+      env:
+        VERSION_INPUT: ${{ inputs.version }}
+        ACTION_REF: ${{ github.action_ref }}
+      run: |
+        set -euo pipefail
+        version="${VERSION_INPUT:-${ACTION_REF:-}}"
+        version="${version#v}"
+        if [ -z "$version" ] || [ "$version" = "main" ]; then
+          echo "::error::set the `version` input to a ci-judge release (the action ref is $ACTION_REF)"; exit 2
+        fi
+        case "$(uname -m)" in
+          x86_64) target=x86_64-unknown-linux-musl ;;
+          aarch64|arm64) target=aarch64-unknown-linux-musl ;;
+          *) echo "::error::unsupported runner architecture $(uname -m)"; exit 2 ;;
+        esac
+        base="https://github.com/chussenot/ci-judge/releases/download/v${version}"
+        mkdir -p "$HOME/.local/bin"
+        curl -fsSL -o "$HOME/.local/bin/ci-judge" "$base/ci-judge-$target"
+        curl -fsSL -o /tmp/ci-judge.sha256 "$base/ci-judge-$target.sha256"
+        (cd "$HOME/.local/bin" && echo "$(cut -d' ' -f1 /tmp/ci-judge.sha256)  ci-judge" | sha256sum -c -)
+        chmod +x "$HOME/.local/bin/ci-judge"
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+        "$HOME/.local/bin/ci-judge" --version
+
+    - name: Judge
+      id: judge
+      shell: bash
+      env:
+        CI_JUDGE_RUBRIC: ${{ inputs.rubric }}
+        CI_JUDGE_MODEL: ${{ inputs.model }}
+        CI_JUDGE_REPLAY: ${{ inputs.replay }}
+        CI_JUDGE_RECORD: ${{ inputs.record }}
+        CI_JUDGE_CASES_OUT: ${{ inputs.cases-out }}
+        CI_JUDGE_ALLOW_UNTUNED: ${{ inputs.allow-untuned == 'true' && 'true' || '' }}
+        EXTRA_ARGS: ${{ inputs.extra-args }}
+      run: |
+        set -uo pipefail
+        # An empty variable is unset for clap: strip the blanks.
+        for v in CI_JUDGE_MODEL CI_JUDGE_REPLAY CI_JUDGE_RECORD CI_JUDGE_CASES_OUT CI_JUDGE_ALLOW_UNTUNED; do
+          [ -z "${!v}" ] && unset "$v"
+        done
+        # shellcheck disable=SC2086
+        ci-judge run $EXTRA_ARGS || echo "::warning title=ci-judge::the judge could not judge (status $?); the gate reports a gate error"
+        # No verdict file is a gate error in the next step; `fail-on` says
+        # whether that fails the job.
+        exit 0
+
+    - name: Gate
+      id: gate
+      shell: bash
+      env:
+        JUDGE_GATE_MODE: ${{ inputs.mode }}
+        JUDGE_GATE_OVERRIDE_LABEL: ${{ inputs.override-label }}
+        JUDGE_GATE_ROUTES: ${{ inputs.routes }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        set -uo pipefail
+        status=0
+        ci-judge gate || status=$?
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+        case "$status" in
+          0) ;;
+          1) echo "::error title=judge-gate::verdict fail: the gate blocks (block mode)" ;;
+          2) echo "::warning title=judge-gate::gate error: no valid verdict, unknown mode or missing route file; see the log" ;;
+          3) echo "::warning title=judge-gate::verdict fail: warning only, nothing is blocked" ;;
+          *) echo "::error title=judge-gate::ci-judge gate exited $status" ;;
+        esac
+        case "$FAIL_ON:$status" in
+          never:*) exit 0 ;;
+          block:1 | closed:1 | closed:2 | warn:1 | warn:3) exit "$status" ;;
+          *:0 | *:2 | *:3) exit 0 ;;
+          *) exit "$status" ;;
+        esac

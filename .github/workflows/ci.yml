@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: fmt, clippy, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --all-targets
+      - name: Check the bundled rubrics
+        run: cargo run --quiet -- check
+
+  musl:
+    name: static binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - run: cargo build --release --target x86_64-unknown-linux-musl
+      - name: The binary runs with no dynamic dependency
+        run: |
+          file target/x86_64-unknown-linux-musl/release/ci-judge
+          ./target/x86_64-unknown-linux-musl/release/ci-judge version
+          ./target/x86_64-unknown-linux-musl/release/ci-judge catalog
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-judge-x86_64-unknown-linux-musl
+          path: target/x86_64-unknown-linux-musl/release/ci-judge
+
+  # The judge judging its own pull requests, with no key: every request is
+  # shaped and printed, nothing is asked. A repository with TYPESAFE_API_KEY
+  # in its secrets runs the full gate through action.yml instead.
+  dogfood:
+    name: explain on this pull request
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo run --quiet -- explain --rubric mr-hygiene | head -c 20000

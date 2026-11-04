@@ -1,0 +1,34 @@
+# Changelog
+
+All notable changes to ci-judge are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
+[Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+## [0.1.0] - 2026-11-04
+
+### Added
+
+- `ci-judge run`: collect a merge request's evidence (Terraform plan, JUnit
+  reports, the diff, the request's own fields, failed job traces on GitLab,
+  files, variables), redact secrets, shape one request per evidence item and
+  one global request, ask a `.jud` rubric through the `judgment` crate, and
+  write `judge-gate.verdict.json` in the contract the `judge-gate` block
+  validates.
+- `ci-judge gate`: the decision step for GitHub workflows and anywhere the
+  GitLab block is not available: shadow, advise, warn, block and route
+  modes, the override label, a pull request comment or merge request note
+  updated in place, GitHub annotations and step summary, `GITHUB_OUTPUT`,
+  a Code Quality report and a dotenv, exit statuses 0/1/2/3.
+- `ci-judge collect` and `ci-judge explain`: see what the model would see,
+  with no call.
+- `ci-judge check` and `ci-judge eval`: hold a rubric, its manifest, cases
+  and recordings together; grade recordings against labels with the crate's
+  accuracy, Brier and calibration metrics; exit 3 below a promotion bar.
+- Shadow mode: `--record DIR` keeps every answer as a `.jud` Recording,
+  `--cases-out FILE` grows an unlabelled Cases document for reviewers.
+- Three bundled rubrics with manifests and synthetic cases: `infra-plan`,
+  `mr-hygiene`, `failed-job-triage`.
+- A composite GitHub Action (`action.yml`) and a release workflow that
+  publishes a static `x86_64-unknown-linux-musl` binary with checksums.
