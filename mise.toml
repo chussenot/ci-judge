@@ -140,7 +140,7 @@ run = "for d in rubrics/*/; do jud check \"$d\"*.jud; done"
 
 [tasks."release:check"]
 description = "What the next release would be"
-run = ["cog check --from-latest-tag", "cog bump --auto --dry-run"]
+run = ["cog check", "cog bump --auto --dry-run"]
 
 [tasks.release]
 description = "Bump, changelog, tag; then push the tag to release"
