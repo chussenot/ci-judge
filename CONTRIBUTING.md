@@ -45,8 +45,9 @@ run --all-files` runs them by hand.
 Commits are Conventional Commits (`feat:`, `fix:`, `build:`, `docs:`,
 `chore(deps):`, ...), one concern per commit. `mise run release:check`
 says what the next release would be; `mise run release` runs `cog bump
---auto`, which bumps the version from the commits, writes the
-`CHANGELOG.md` section and tags. The release owner pushes the tag
+--auto`, which bumps the version from the commits and tags, after
+checking that `CHANGELOG.md` has a section headed with that version:
+write it by hand first. The release owner pushes the tag
 (`git push --follow-tags`); `.github/workflows/release.yml` then runs the
 gates, builds the three binaries, publishes the GitHub release with
 checksums and provenance, builds the image for `linux/amd64` and

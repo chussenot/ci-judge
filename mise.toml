@@ -20,7 +20,7 @@ rust = { version = "1.97.0", components = "rustfmt,clippy" }
 "cargo:cargo-deny" = "0.20.2"
 # Every feature combination builds (`mise run hack`).
 "cargo:cargo-hack" = "0.6.45"
-# Conventional commits and the release bump (`cog bump`, CHANGELOG.md).
+# Conventional commits and the release bump (`cog bump`, the tag).
 "cargo:cocogitto" = "7.0.0"
 # The judgment crate's own command line: `jud check`, `jud eval`, `jud tune`
 # read the rubrics, cases and recordings ci-judge writes.
@@ -135,8 +135,9 @@ description = "The bundled rubrics through the judgment crate's own command line
 run = "for d in rubrics/*/; do jud check \"$d\"*.jud; done"
 
 # ---------------------------------------------------------------------------
-# Releasing: `cog bump --auto` bumps the version from the commits, updates
-# CHANGELOG.md and tags; the tag push runs .github/workflows/release.yml.
+# Releasing: `cog bump --auto` bumps the version from the commits and tags
+# once CHANGELOG.md has the version's section (written by hand); the tag
+# push runs .github/workflows/release.yml.
 
 [tasks."release:check"]
 description = "What the next release would be"
