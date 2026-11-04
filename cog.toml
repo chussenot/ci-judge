@@ -10,7 +10,7 @@ ignore_merge_commits = true
 disable_changelog = true
 pre_bump_hooks = [
   "grep -qF '## [{{version}}] ' CHANGELOG.md",
-  "cargo set-version {{version}} 2>/dev/null || sed -i.bak 's/^version = \".*\"/version = \"{{version}}\"/' Cargo.toml",
+  "cargo set-version {{version}} 2>/dev/null || sed -i.bak 's/^version = \".*\"/version = \"{{version}}\"/' Cargo.toml && rm -f Cargo.toml.bak",
   "cargo check --quiet",
   "git add Cargo.toml Cargo.lock",
 ]
