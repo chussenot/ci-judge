@@ -14,6 +14,13 @@ All notable changes to ci-judge are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `docs/project/research/mechanics-study.md`: a study of the mechanism
+  as built against the gate tools in the field and the Rust crate
+  landscape, with the defects found, the patterns worth adopting, the
+  crates that earn their place, and a ranked roadmap.
+
 ## [0.1.1] - 2026-11-04
 
 ### Added
