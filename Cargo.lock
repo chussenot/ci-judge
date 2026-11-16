@@ -869,9 +869,9 @@ dependencies = [
 
 [[package]]
 name = "judgment"
-version = "0.16.1"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98d97ce0fff5ee4c2f955249cc832b87ebd664d6c49d7694e367e9af577a25fe"
+checksum = "05d7c9c80e116efa37f492ca15502a3f25d796faf4ba2d0ad75b2eec6d6f6570"
 dependencies = [
  "fastrand",
  "httpdate",
